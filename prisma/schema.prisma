@@ -1,0 +1,751 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ORGANIZATION
+// ─────────────────────────────────────────────────────────────
+
+model Plant {
+  id          String       @id @default(cuid())
+  code        String       @unique
+  nameTh      String
+  nameEn      String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  departments Department[]
+}
+
+model Department {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  nameTh    String
+  nameEn    String
+  plantId   String
+  plant     Plant     @relation(fields: [plantId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  sections  Section[]
+  users     User[]
+  assets    Asset[]
+  workOrders WorkOrder[]
+}
+
+model Section {
+  id           String     @id @default(cuid())
+  code         String     @unique
+  nameTh       String
+  nameEn       String
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  users        User[]
+  assets       Asset[]
+}
+
+model Area {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  nameTh    String
+  nameEn    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assets    Asset[]
+}
+
+model Shift {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  nameTh    String
+  nameEn    String
+  startTime String   // "08:00"
+  endTime   String   // "16:00"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────
+// USERS & ROLES
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id              String            @id @default(cuid())
+  email           String            @unique
+  passwordHash    String
+  nameTh          String
+  nameEn          String
+  phone           String?
+  avatar          String?
+  isActive        Boolean           @default(true)
+  roleId          String
+  role            Role              @relation(fields: [roleId], references: [id])
+  departmentId    String?
+  department      Department?       @relation(fields: [departmentId], references: [id])
+  sectionId       String?
+  section         Section?          @relation(fields: [sectionId], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  createdWorkOrders WorkOrder[]     @relation("WOCreator")
+  assignedWorkOrders WorkOrder[]    @relation("WOAssignee")
+  approvals       WOApproval[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  nameTh      String
+  nameEn      String
+  description String?
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  resource    String           // "work_order", "asset", "user"
+  action      String           // "create", "read", "update", "delete", "approve"
+  description String?
+  createdAt   DateTime         @default(now())
+  roles       RolePermission[]
+
+  @@unique([resource, action])
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  level        PermLevel  @default(FULL)
+  createdAt    DateTime   @default(now())
+
+  @@unique([roleId, permissionId])
+}
+
+enum PermLevel {
+  FULL
+  PARTIAL
+  NONE
+}
+
+// ─────────────────────────────────────────────────────────────
+// ASSETS
+// ─────────────────────────────────────────────────────────────
+
+model AssetClass {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  nameTh      String
+  nameEn      String
+  category    AssetCategory
+  criticality Criticality @default(B)
+  color       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  assets      Asset[]
+  checklistTemplates ChecklistTemplate[]
+}
+
+enum AssetCategory {
+  MACHINE
+  MOLD
+  IT
+  INSTRUMENT
+}
+
+enum Criticality {
+  A
+  B
+  C
+}
+
+model Asset {
+  id               String        @id @default(cuid())
+  code             String        @unique
+  nameTh           String
+  nameEn           String
+  category         AssetCategory
+  status           AssetStatus   @default(ACTIVE)
+  assetClassId     String?
+  assetClass       AssetClass?   @relation(fields: [assetClassId], references: [id])
+  departmentId     String?
+  department       Department?   @relation(fields: [departmentId], references: [id])
+  sectionId        String?
+  section          Section?      @relation(fields: [sectionId], references: [id])
+  areaId           String?
+  area             Area?         @relation(fields: [areaId], references: [id])
+  manufacturer     String?
+  model            String?
+  serialNumber     String?
+  purchaseDate     DateTime?
+  installDate      DateTime?
+  warrantyExpiry   DateTime?
+  purchaseCost     Decimal?      @db.Decimal(15, 2)
+  description      String?
+  imageUrl         String?
+  qrCode           String?       @unique
+  isDeleted        Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  createdBy        String?
+  updatedBy        String?
+
+  // Category-specific fields (nullable — only filled per category)
+  // MACHINE fields
+  machineHours     Decimal?      @db.Decimal(10, 2)
+  powerKw          Decimal?      @db.Decimal(8, 2)
+  voltage          Int?
+  // MOLD fields
+  shotCount        Int?
+  cavityCount      Int?
+  moldLifeShots    Int?
+  // IT fields
+  ipAddress        String?
+  macAddress       String?
+  osVersion        String?
+  // INSTRUMENT fields
+  instrumentTypeId String?
+  instrumentType   InstrumentType? @relation(fields: [instrumentTypeId], references: [id])
+  calPeriodMonths  Int?
+  lastCalDate      DateTime?
+  nextCalDate      DateTime?
+  calLabId         String?
+  calLab           CalibrationLab? @relation(fields: [calLabId], references: [id])
+  calStatus        CalStatus?
+
+  workOrders       WorkOrder[]
+  pmPlans          PMPlan[]
+  spareParts       AssetSparePart[]
+  calibrations     Calibration[]
+}
+
+enum AssetStatus {
+  ACTIVE
+  INACTIVE
+  UNDER_REPAIR
+  RETIRED
+  SCRAPPED
+}
+
+enum CalStatus {
+  NORMAL
+  DUE_SOON
+  OVERDUE
+}
+
+// ─────────────────────────────────────────────────────────────
+// CALIBRATION
+// ─────────────────────────────────────────────────────────────
+
+model InstrumentType {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  nameTh    String
+  nameEn    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assets    Asset[]
+}
+
+model CalibrationLab {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  nameTh      String
+  nameEn      String
+  contact     String?
+  phone       String?
+  email       String?
+  accreditNo  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assets      Asset[]
+  calibrations Calibration[]
+}
+
+model Calibration {
+  id          String    @id @default(cuid())
+  assetId     String
+  asset       Asset     @relation(fields: [assetId], references: [id])
+  calDate     DateTime
+  nextCalDate DateTime
+  certNumber  String?
+  certFileUrl String?
+  labId       String?
+  lab         CalibrationLab? @relation(fields: [labId], references: [id])
+  result      String?
+  notes       String?
+  workOrderId String?
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   String?
+}
+
+// ─────────────────────────────────────────────────────────────
+// WORK ORDERS
+// ─────────────────────────────────────────────────────────────
+
+model Priority {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  nameTh    String
+  nameEn    String
+  color     String
+  slaHours  Int
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  workOrders WorkOrder[]
+  slaRules  SLARule[]
+}
+
+model WOType {
+  id               String      @id @default(cuid())
+  code             String      @unique
+  nameTh           String
+  nameEn           String
+  color            String
+  defaultWorkflowId String?
+  defaultWorkflow  Workflow?   @relation(fields: [defaultWorkflowId], references: [id])
+  sortOrder        Int         @default(0)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  workOrders       WorkOrder[]
+  slaRules         SLARule[]
+}
+
+model WONumberSeries {
+  id         String   @id @default(cuid())
+  pattern    String   @unique // "WO-{YY}{MM}-{####}"
+  lastNumber Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
+model WorkOrder {
+  id              String      @id @default(cuid())
+  woNumber        String      @unique
+  title           String
+  description     String?
+  status          WOStatus    @default(OPEN)
+  priorityId      String
+  priority        Priority    @relation(fields: [priorityId], references: [id])
+  typeId          String
+  type            WOType      @relation(fields: [typeId], references: [id])
+  assetId         String
+  asset           Asset       @relation(fields: [assetId], references: [id])
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  workflowId      String?
+  workflow        Workflow?   @relation(fields: [workflowId], references: [id])
+  currentStepId   String?
+  creatorId       String
+  creator         User        @relation("WOCreator", fields: [creatorId], references: [id])
+  assigneeId      String?
+  assignee        User?       @relation("WOAssignee", fields: [assigneeId], references: [id])
+  pmPlanId        String?
+  pmPlan          PMPlan?     @relation(fields: [pmPlanId], references: [id])
+  startTime       DateTime?
+  endTime         DateTime?
+  holdDuration    Int?        // minutes on hold
+  laborHours      Decimal?    @db.Decimal(6, 2)
+  laborCost       Decimal?    @db.Decimal(12, 2)
+  totalPartsCost  Decimal?    @db.Decimal(12, 2)
+  failureCodeId   String?
+  failureCode     FailureCode? @relation(fields: [failureCodeId], references: [id])
+  causeCodeId     String?
+  causeCode       CauseCode?  @relation(fields: [causeCodeId], references: [id])
+  actionCodeId    String?
+  actionCode      ActionCode? @relation(fields: [actionCodeId], references: [id])
+  notes           String?
+  attachments     WOAttachment[]
+  parts           WOSparePart[]
+  approvals       WOApproval[]
+  checklistItems  WOChecklistItem[]
+  calibrations    Calibration[]
+  isDeleted       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  createdBy       String?
+  updatedBy       String?
+}
+
+enum WOStatus {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD
+  DONE
+  CANCELLED
+}
+
+model WOAttachment {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileUrl     String
+  fileSize    Int?
+  mimeType    String?
+  createdAt   DateTime  @default(now())
+  createdBy   String?
+}
+
+model WOSparePart {
+  id           String     @id @default(cuid())
+  workOrderId  String
+  workOrder    WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  sparePartId  String
+  sparePart    SparePart  @relation(fields: [sparePartId], references: [id])
+  quantity     Decimal    @db.Decimal(10, 3)
+  unitCost     Decimal?   @db.Decimal(12, 2)
+  createdAt    DateTime   @default(now())
+}
+
+model WOApproval {
+  id          String          @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder       @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  stepNumber  Int
+  stepNameTh  String
+  stepNameEn  String
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id])
+  action      ApprovalAction?
+  comment     String?
+  actedAt     DateTime?
+  createdAt   DateTime        @default(now())
+}
+
+enum ApprovalAction {
+  APPROVED
+  REJECTED
+  RETURNED
+  SKIPPED
+}
+
+// ─────────────────────────────────────────────────────────────
+// STANDARD CODES (ISO 14224)
+// ─────────────────────────────────────────────────────────────
+
+model FailureCode {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  nameTh    String
+  nameEn    String
+  createdAt DateTime    @default(now())
+  workOrders WorkOrder[]
+}
+
+model CauseCode {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  nameTh    String
+  nameEn    String
+  createdAt DateTime    @default(now())
+  workOrders WorkOrder[]
+}
+
+model ActionCode {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  nameTh    String
+  nameEn    String
+  createdAt DateTime    @default(now())
+  workOrders WorkOrder[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// WORKFLOW / APPROVAL ENGINE
+// ─────────────────────────────────────────────────────────────
+
+model Workflow {
+  id          String         @id @default(cuid())
+  code        String         @unique
+  nameTh      String
+  nameEn      String
+  description String?
+  isDefault   Boolean        @default(false)
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  steps       WorkflowStep[]
+  workOrders  WorkOrder[]
+  woTypes     WOType[]
+}
+
+model WorkflowStep {
+  id              String        @id @default(cuid())
+  workflowId      String
+  workflow        Workflow      @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  stepNumber      Int
+  nameTh          String
+  nameEn          String
+  roleCode        String
+  allowedActions  String[]      // ["approve", "reject", "return"]
+  skipCondition   String?       // JSON expression
+  slaHours        Int?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────
+// PM SCHEDULE
+// ─────────────────────────────────────────────────────────────
+
+model PMFrequency {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  nameTh      String
+  nameEn      String
+  intervalDays Int?
+  usageBased  Boolean  @default(false)
+  usageUnit   String?  // "shots", "hours"
+  usageInterval Int?
+  createdAt   DateTime @default(now())
+  pmPlans     PMPlan[]
+}
+
+model PMPlan {
+  id                String       @id @default(cuid())
+  assetId           String
+  asset             Asset        @relation(fields: [assetId], references: [id])
+  frequencyId       String
+  frequency         PMFrequency  @relation(fields: [frequencyId], references: [id])
+  checklistTemplateId String?
+  checklistTemplate ChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id])
+  assigneeId        String?
+  leadTimeDays      Int          @default(7)
+  lastDoneDate      DateTime?
+  nextDueDate       DateTime?
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  createdBy         String?
+  workOrders        WorkOrder[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// CHECKLIST
+// ─────────────────────────────────────────────────────────────
+
+model ChecklistCategory {
+  id        String             @id @default(cuid())
+  code      String             @unique
+  nameTh    String
+  nameEn    String
+  color     String
+  createdAt DateTime           @default(now())
+  items     ChecklistItem[]
+}
+
+model ChecklistTemplate {
+  id           String          @id @default(cuid())
+  code         String          @unique
+  nameTh       String
+  nameEn       String
+  assetClassId String?
+  assetClass   AssetClass?     @relation(fields: [assetClassId], references: [id])
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  items        ChecklistItem[]
+  pmPlans      PMPlan[]
+}
+
+model ChecklistItem {
+  id                String            @id @default(cuid())
+  templateId        String
+  template          ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  categoryId        String?
+  category          ChecklistCategory? @relation(fields: [categoryId], references: [id])
+  sortOrder         Int               @default(0)
+  descriptionTh     String
+  descriptionEn     String
+  standard          String?
+  whoResponsible    String?
+  isCritical        Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  woChecklistItems  WOChecklistItem[]
+}
+
+model WOChecklistItem {
+  id             String        @id @default(cuid())
+  workOrderId    String
+  workOrder      WorkOrder     @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  checklistItemId String?
+  checklistItem  ChecklistItem? @relation(fields: [checklistItemId], references: [id])
+  descriptionTh  String
+  descriptionEn  String
+  status         CheckStatus   @default(PENDING)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+enum CheckStatus {
+  PENDING
+  PASS
+  FAIL
+  NA
+}
+
+// ─────────────────────────────────────────────────────────────
+// SPARE PARTS
+// ─────────────────────────────────────────────────────────────
+
+model UnitOfMeasure {
+  id         String      @id @default(cuid())
+  code       String      @unique
+  nameTh     String
+  nameEn     String
+  createdAt  DateTime    @default(now())
+  spareParts SparePart[]
+}
+
+model Supplier {
+  id           String      @id @default(cuid())
+  code         String      @unique
+  nameTh       String
+  nameEn       String
+  contact      String?
+  phone        String?
+  email        String?
+  leadTimeDays Int         @default(7)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  spareParts   SparePart[]
+}
+
+model Warehouse {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  nameTh    String
+  nameEn    String
+  location  String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  spareParts SparePart[]
+}
+
+model SparePart {
+  id             String         @id @default(cuid())
+  code           String         @unique
+  nameTh         String
+  nameEn         String
+  partNumber     String?
+  unitId         String?
+  unit           UnitOfMeasure? @relation(fields: [unitId], references: [id])
+  supplierId     String?
+  supplier       Supplier?      @relation(fields: [supplierId], references: [id])
+  warehouseId    String?
+  warehouse      Warehouse?     @relation(fields: [warehouseId], references: [id])
+  shelfLocation  String?
+  stockOnHand    Decimal        @default(0) @db.Decimal(12, 3)
+  reorderPoint   Decimal        @default(0) @db.Decimal(12, 3)
+  unitCost       Decimal?       @db.Decimal(12, 2)
+  description    String?
+  isDeleted      Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  createdBy      String?
+  assets         AssetSparePart[]
+  workOrders     WOSparePart[]
+}
+
+model AssetSparePart {
+  id          String    @id @default(cuid())
+  assetId     String
+  asset       Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  sparePartId String
+  sparePart   SparePart @relation(fields: [sparePartId], references: [id], onDelete: Cascade)
+  minQty      Decimal?  @db.Decimal(10, 3)
+  createdAt   DateTime  @default(now())
+
+  @@unique([assetId, sparePartId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────
+
+model NotificationRule {
+  id         String   @id @default(cuid())
+  event      String   // "urgent_WO_created", "PM_due_soon", etc.
+  audience   String   // role code or "ALL"
+  channel    String   // "in_app", "email", "line"
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id])
+  type        NotificationType
+  titleTh     String
+  titleEn     String
+  bodyTh      String?
+  bodyEn      String?
+  link        String?
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+}
+
+enum NotificationType {
+  URGENT_WO
+  PM_DUE
+  CAL_DUE
+  CAL_OVERDUE
+  PARTS_LOW
+  WO_APPROVAL
+  WO_OVERDUE
+  SYSTEM
+}
+
+// ─────────────────────────────────────────────────────────────
+// SLA RULES
+// ─────────────────────────────────────────────────────────────
+
+model SLARule {
+  id             String    @id @default(cuid())
+  priorityId     String?
+  priority       Priority? @relation(fields: [priorityId], references: [id])
+  typeId         String?
+  type           WOType?   @relation(fields: [typeId], references: [id])
+  responseHours  Int
+  resolveHours   Int
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────
+// AUDIT LOG
+// ─────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  entity     String   // "WorkOrder", "Asset", etc.
+  entityId   String
+  action     String   // "CREATE", "UPDATE", "DELETE"
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}

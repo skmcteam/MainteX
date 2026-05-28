@@ -1,0 +1,190 @@
+/* Google Fonts must come before all other @import rules */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@import "tailwindcss";
+
+/* ─── Tailwind v4 dark mode variant ─── */
+@variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* ─── Light mode tokens ─── */
+:root {
+  --bg: #F5F7FB;
+  --panel: #FFFFFF;
+  --panel-2: #F0F3F9;
+  --line: #E2E7F0;
+  --text: #1A202C;
+  --text-sub: #64748B;
+  --text-disabled: #A0AABF;
+
+  --brand: #1B6FE8;
+  --brand-soft: rgba(27, 111, 232, 0.10);
+  --brand-hover: #1560CC;
+
+  --success: #0D9062;
+  --success-soft: #EAF5F0;
+  --warning: #B97B00;
+  --warning-soft: #FBF0DD;
+  --danger: #C03030;
+  --danger-soft: #FBEAEA;
+  --purple: #6340C8;
+  --purple-soft: #F0EDFF;
+  --cyan: #0A7FA0;
+  --cyan-soft: #E0F4FA;
+  --orange: #C05800;
+  --orange-soft: #FEF0E6;
+
+  --sidebar-w: 240px;
+  --topbar-h: 52px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+
+  color-scheme: light;
+}
+
+/* ─── Dark mode tokens ─── */
+[data-theme=dark] {
+  --bg: #0F1218;
+  --panel: #161C28;
+  --panel-2: #1D2535;
+  --line: #2A3245;
+  --text: #E8EDF5;
+  --text-sub: #8493AF;
+  --text-disabled: #4A5568;
+
+  --brand: #4A8EF0;
+  --brand-soft: rgba(74, 142, 240, 0.13);
+  --brand-hover: #5A9BFF;
+
+  --success: #1DB87A;
+  --success-soft: rgba(29, 184, 122, 0.12);
+  --warning: #E8A020;
+  --warning-soft: rgba(232, 160, 32, 0.12);
+  --danger: #F05060;
+  --danger-soft: rgba(240, 80, 96, 0.12);
+  --purple: #9B7BFF;
+  --purple-soft: rgba(155, 123, 255, 0.12);
+  --cyan: #20C0E8;
+  --cyan-soft: rgba(32, 192, 232, 0.10);
+  --orange: #F07820;
+  --orange-soft: rgba(240, 120, 32, 0.12);
+
+  color-scheme: dark;
+}
+
+/* ─── Base styles ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: "Noto Sans Thai", "Plus Jakarta Sans", system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.55;
+  background: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ─── Typography utilities ─── */
+.font-mono-num {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.text-kpi {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.label-caps {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-sub);
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-sub);
+}
+
+/* ─── Focus ring ─── */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ─── Tailwind v4 custom utilities ─── */
+@layer utilities {
+  .bg-surface {
+    background-color: var(--bg);
+  }
+  .bg-panel {
+    background-color: var(--panel);
+  }
+  .bg-panel-2 {
+    background-color: var(--panel-2);
+  }
+  .border-line {
+    border-color: var(--line);
+  }
+  .text-primary {
+    color: var(--text);
+  }
+  .text-sub {
+    color: var(--text-sub);
+  }
+  .text-brand {
+    color: var(--brand);
+  }
+
+  .bg-brand-soft { background-color: var(--brand-soft); }
+  .bg-success-soft { background-color: var(--success-soft); }
+  .bg-warning-soft { background-color: var(--warning-soft); }
+  .bg-danger-soft { background-color: var(--danger-soft); }
+  .bg-purple-soft { background-color: var(--purple-soft); }
+  .bg-cyan-soft { background-color: var(--cyan-soft); }
+  .bg-orange-soft { background-color: var(--orange-soft); }
+
+  .text-success { color: var(--success); }
+  .text-warning { color: var(--warning); }
+  .text-danger { color: var(--danger); }
+  .text-purple { color: var(--purple); }
+  .text-cyan { color: var(--cyan); }
+  .text-orange { color: var(--orange); }
+
+  .panel-border {
+    border: 0.5px solid var(--line);
+    border-radius: var(--radius-md);
+    background-color: var(--panel);
+  }
+
+  .row-hover:hover {
+    background-color: var(--panel-2);
+    cursor: pointer;
+  }
+}

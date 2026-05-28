@@ -1,0 +1,2 @@
+// We use standard Next.js navigation — no locale prefix in URLs.
+export { Link, redirect, usePathname, useRouter } from "next/navigation";
