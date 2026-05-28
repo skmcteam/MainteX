@@ -8,8 +8,9 @@ import {
   Package,
   Info,
 } from "lucide-react";
-import { getAsset } from "@/app/(app)/assets/actions";
+import { getAsset, getAssetFormData } from "@/app/(app)/assets/actions";
 import { AssetStatusPill, CalStatusPill, WOStatusPill, PriorityPill } from "@/components/shared/status-pill";
+import { AssetEditButton } from "@/components/assets/asset-edit-button";
 import { formatDate, formatCurrency, formatNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,7 @@ export default async function AssetDetailPage({ params }: Props) {
   const { id } = await params;
   const asset = await getAsset(id);
   if (!asset) notFound();
+  const formData = await getAssetFormData(asset.category as "MACHINE" | "MOLD" | "IT" | "INSTRUMENT");
 
   const backHref = CATEGORY_HREF[asset.category] ?? "/assets/machines";
   const catLabel = CATEGORY_LABEL[asset.category] ?? "อุปกรณ์";
@@ -63,7 +65,7 @@ export default async function AssetDetailPage({ params }: Props) {
         className="panel-border p-5"
       >
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="flex-1">
             <div className="flex items-center gap-2">
               <span
                 className="font-mono-num text-xs font-semibold"
@@ -86,6 +88,7 @@ export default async function AssetDetailPage({ params }: Props) {
               {asset.model && ` ${asset.model}`}
             </p>
           </div>
+          <AssetEditButton asset={asset} formData={formData} />
         </div>
 
         {/* Quick stat row */}

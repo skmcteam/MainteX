@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Search, CalendarCheck, ChevronRight, AlertTriangle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Search, CalendarCheck, ChevronRight, AlertTriangle, Zap, Loader2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AssetStatusPill } from "@/components/shared/status-pill";
 import { PMFormModal } from "./pm-form-modal";
 import { formatDate, daysUntil } from "@/lib/utils";
 import type { PMRow, PMFormData } from "@/app/(app)/pm-schedule/actions";
+import { generatePMWorkOrders } from "@/app/(app)/pm-schedule/actions";
+import { toast } from "sonner";
 
 const FILTER_TABS = [
   { key: "all", label: "ทั้งหมด" },
@@ -29,9 +32,24 @@ function getDueStatus(nextDueDate: string | null): "overdue" | "due_soon" | "nor
 }
 
 export function PMList({ data, formData }: Props) {
+  const router = useRouter();
   const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const result = await generatePMWorkOrders();
+      toast.success(`สร้างใบสั่งซ่อม PM สำเร็จ ${result.created} ใบ (ข้าม ${result.skipped})`);
+      router.refresh();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     let rows = data;
@@ -101,6 +119,15 @@ export function PMList({ data, formData }: Props) {
                 style={{ background: "var(--panel-2)", border: "0.5px solid var(--line)", color: "var(--text)", outline: "none", width: "160px" }}
               />
             </div>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white active:scale-95 disabled:opacity-60"
+              style={{ background: "var(--success)" }}
+            >
+              {generating ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+              สร้าง WO จาก PM
+            </button>
             <button
               onClick={() => setModalOpen(true)}
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white active:scale-95"

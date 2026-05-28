@@ -76,7 +76,7 @@ export default async function WorkOrderDetailPage({ params }: Props) {
           </div>
 
           {/* Status actions */}
-          <WOStatusActions woId={wo.id} currentStatus={wo.status} />
+          <WOStatusActions woId={wo.id} woNumber={wo.woNumber} currentStatus={wo.status} />
         </div>
 
         {/* Meta row */}

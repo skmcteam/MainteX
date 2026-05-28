@@ -164,22 +164,18 @@ export async function createWorkOrder(input: z.infer<typeof WOCreateSchema>) {
 
   const data = WOCreateSchema.parse(input);
 
-  // Generate WO number atomically
-  const series = await prisma.wONumberSeries.findFirst();
-  let woNumber: string;
-
-  if (series) {
-    woNumber = generateWONumber(series.pattern, series.lastNumber);
-    await prisma.wONumberSeries.update({
-      where: { id: series.id },
-      data: { lastNumber: series.lastNumber + 1 },
-    });
-  } else {
-    const newSeries = await prisma.wONumberSeries.create({
-      data: { pattern: "WO-{YY}{MM}-{####}", lastNumber: 1 },
-    });
-    woNumber = generateWONumber(newSeries.pattern, 0);
+  // Atomic WO number: increment and return in one query
+  const seriesCheck = await prisma.wONumberSeries.findFirst();
+  if (!seriesCheck) {
+    await prisma.wONumberSeries.create({ data: { pattern: "WO-{YY}{MM}-{####}", lastNumber: 0 } });
   }
+  const updated = await prisma.$queryRaw<{ lastNumber: number; pattern: string }[]>`
+    UPDATE "WONumberSeries"
+    SET "lastNumber" = "lastNumber" + 1, "updatedAt" = NOW()
+    WHERE id = (SELECT id FROM "WONumberSeries" LIMIT 1)
+    RETURNING "lastNumber", pattern
+  `;
+  const woNumber = generateWONumber(updated[0].pattern, updated[0].lastNumber - 1);
 
   const asset = await prisma.asset.findUnique({
     where: { id: data.assetId },
@@ -208,7 +204,13 @@ export async function createWorkOrder(input: z.infer<typeof WOCreateSchema>) {
 export async function updateWOStatus(
   id: string,
   status: WOStatus,
-  extras?: { notes?: string; laborHours?: number }
+  extras?: {
+    notes?: string;
+    laborHours?: number;
+    failureCodeId?: string;
+    causeCodeId?: string;
+    actionCodeId?: string;
+  }
 ) {
   const update: Record<string, unknown> = { status };
   if (status === "IN_PROGRESS") update.startTime = new Date();
@@ -217,11 +219,23 @@ export async function updateWOStatus(
     if (extras?.laborHours) update.laborHours = extras.laborHours;
   }
   if (extras?.notes) update.notes = extras.notes;
+  if (extras?.failureCodeId) update.failureCodeId = extras.failureCodeId;
+  if (extras?.causeCodeId) update.causeCodeId = extras.causeCodeId;
+  if (extras?.actionCodeId) update.actionCodeId = extras.actionCodeId;
 
   await prisma.workOrder.update({ where: { id }, data: update });
   revalidatePath("/work-orders");
   revalidatePath(`/work-orders/${id}`);
   return { success: true };
+}
+
+export async function getClosureFormData() {
+  const [failureCodes, causeCodes, actionCodes] = await Promise.all([
+    prisma.failureCode.findMany({ orderBy: { code: "asc" } }),
+    prisma.causeCode.findMany({ orderBy: { code: "asc" } }),
+    prisma.actionCode.findMany({ orderBy: { code: "asc" } }),
+  ]);
+  return { failureCodes, causeCodes, actionCodes };
 }
 
 export async function updateChecklistItem(id: string, status: "PENDING" | "PASS" | "FAIL" | "NA", notes?: string) {

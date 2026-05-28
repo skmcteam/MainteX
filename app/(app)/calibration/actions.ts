@@ -29,13 +29,23 @@ export async function getCalibrationAssets() {
     orderBy: { code: "asc" },
   });
 
+  const now = new Date();
+  const soon = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  function computeCalStatus(nextCalDate: Date | null): "OVERDUE" | "DUE_SOON" | "NORMAL" | null {
+    if (!nextCalDate) return null;
+    if (nextCalDate < now) return "OVERDUE";
+    if (nextCalDate < soon) return "DUE_SOON";
+    return "NORMAL";
+  }
+
   return rows.map((r) => ({
     id: r.id,
     code: r.code,
     nameTh: r.nameTh,
     nameEn: r.nameEn,
     status: r.status,
-    calStatus: r.calStatus,
+    calStatus: computeCalStatus(r.nextCalDate),
     calPeriodMonths: r.calPeriodMonths,
     lastCalDate: r.lastCalDate?.toISOString() ?? null,
     nextCalDate: r.nextCalDate?.toISOString() ?? null,

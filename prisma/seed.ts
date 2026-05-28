@@ -466,6 +466,50 @@ async function main() {
     });
   }
 
+  // ─── PM Plans ────────────────────────────────────────────
+  function addDays(base: Date, days: number) {
+    const d = new Date(base); d.setDate(d.getDate() + days); return d;
+  }
+  const today = new Date();
+
+  const pmPlanData = [
+    { assetCode: "SK-P-001", freqCode: "M",  lastDone: addDays(today, -25), lead: 7 },
+    { assetCode: "SK-P-002", freqCode: "M",  lastDone: addDays(today, -35), lead: 7 },
+    { assetCode: "SK-P-003", freqCode: "3M", lastDone: addDays(today, -80), lead: 14 },
+    { assetCode: "SK-P-004", freqCode: "M",  lastDone: addDays(today, -10), lead: 7 },
+    { assetCode: "SK-P-005", freqCode: "6M", lastDone: addDays(today, -170), lead: 14 },
+    { assetCode: "SK-P-006", freqCode: "M",  lastDone: addDays(today, -5),  lead: 7 },
+    { assetCode: "SK-P-008", freqCode: "3M", lastDone: addDays(today, -95), lead: 14 },
+    { assetCode: "SK-P-009", freqCode: "M",  lastDone: addDays(today, -28), lead: 7 },
+  ];
+
+  for (const plan of pmPlanData) {
+    const asset = await prisma.asset.findUnique({ where: { code: plan.assetCode } });
+    const freq = await prisma.pMFrequency.findUnique({ where: { code: plan.freqCode } });
+    if (!asset || !freq || !freq.intervalDays) continue;
+    const nextDueDate = addDays(plan.lastDone, freq.intervalDays);
+    const existing = await prisma.pMPlan.findFirst({ where: { assetId: asset.id, frequencyId: freq.id } });
+    if (!existing) {
+      await prisma.pMPlan.create({
+        data: {
+          assetId: asset.id,
+          frequencyId: freq.id,
+          checklistTemplateId: pressTemplate.id,
+          leadTimeDays: plan.lead,
+          lastDoneDate: plan.lastDone,
+          nextDueDate,
+          isActive: true,
+        },
+      });
+    }
+  }
+
+  // Fix WONumberSeries counter to match seeded WOs (3 hardcoded + any created)
+  await prisma.wONumberSeries.updateMany({
+    where: { pattern: "WO-{YY}{MM}-{####}" },
+    data: { lastNumber: 15 },
+  });
+
   // ─── Notification Rules ───────────────────────────────────
   const notifRules = [
     { event: "urgent_WO_created", audience: "MAINTENANCE_SUPERVISOR", channel: "in_app" },

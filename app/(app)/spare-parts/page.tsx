@@ -1,14 +1,22 @@
-import { getTranslations } from "next-intl/server";
-import { Package } from "lucide-react";
+import { getSpareParts, getPartsFormData } from "./actions";
+import { PartsClient } from "@/components/spare-parts/parts-client";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function SparePartsPage() {
-  const t = await getTranslations();
+  const [data, formData] = await Promise.all([getSpareParts(), getPartsFormData()]);
+  const lowStock = data.filter((r) => r.isLowStock).length;
   return (
-    <div>
-      <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>{t("parts.title")}</h1>
-      <div className="mt-4 panel-border p-8 text-center" style={{ color: "var(--text-sub)" }}>
-        <Package size={32} className="mx-auto mb-3 opacity-40" />
-        <p className="text-sm">Phase 2 — Spare Parts Inventory</p>
+    <div className="flex flex-col gap-4">
+      <div>
+        <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>อะไหล่</h1>
+        <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>
+          คลังอะไหล่ · {data.length} รายการ
+          {lowStock > 0 && <span style={{ color: "var(--danger)" }}> · สต็อกต่ำ {lowStock} รายการ</span>}
+        </p>
       </div>
+      <PartsClient data={data} formData={formData} />
     </div>
   );
 }

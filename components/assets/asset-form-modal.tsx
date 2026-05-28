@@ -8,8 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { createAsset } from "@/app/(app)/assets/actions";
-import type { AssetFormData } from "@/app/(app)/assets/actions";
+import { createAsset, updateAsset } from "@/app/(app)/assets/actions";
+import type { AssetFormData, AssetDetail } from "@/app/(app)/assets/actions";
 
 const schema = z.object({
   code: z.string().min(1, "กรุณาระบุรหัส"),
@@ -47,6 +47,7 @@ interface Props {
   onClose: () => void;
   category: "MACHINE" | "MOLD" | "IT" | "INSTRUMENT";
   formData: AssetFormData;
+  editAsset?: AssetDetail;
 }
 
 const FIELD_LABEL: Record<Props["category"], string> = {
@@ -56,10 +57,11 @@ const FIELD_LABEL: Record<Props["category"], string> = {
   INSTRUMENT: "เครื่องมือวัด",
 };
 
-export function AssetFormModal({ open, onClose, category, formData }: Props) {
+export function AssetFormModal({ open, onClose, category, formData, editAsset }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [deptId, setDeptId] = useState<string>("");
+  const isEdit = !!editAsset;
 
   const {
     register,
@@ -67,7 +69,33 @@ export function AssetFormModal({ open, onClose, category, formData }: Props) {
     reset,
     watch,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { status: "ACTIVE" } });
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: editAsset ? {
+      code: editAsset.code,
+      nameTh: editAsset.nameTh,
+      nameEn: editAsset.nameEn,
+      status: editAsset.status,
+      assetClassId: editAsset.assetClass?.id ?? null,
+      departmentId: editAsset.department?.id ?? null,
+      sectionId: editAsset.section?.id ?? null,
+      areaId: editAsset.area?.id ?? null,
+      manufacturer: editAsset.manufacturer ?? null,
+      model: editAsset.model ?? null,
+      serialNumber: editAsset.serialNumber ?? null,
+      description: editAsset.description ?? null,
+      powerKw: editAsset.powerKw?.toString() ?? null,
+      voltage: editAsset.voltage?.toString() ?? null,
+      cavityCount: editAsset.cavityCount?.toString() ?? null,
+      moldLifeShots: editAsset.moldLifeShots?.toString() ?? null,
+      ipAddress: editAsset.ipAddress ?? null,
+      macAddress: editAsset.macAddress ?? null,
+      osVersion: editAsset.osVersion ?? null,
+      instrumentTypeId: editAsset.instrumentType?.id ?? null,
+      calPeriodMonths: editAsset.calPeriodMonths?.toString() ?? null,
+      calLabId: editAsset.calLab?.id ?? null,
+    } : { status: "ACTIVE" },
+  });
 
   const watchedDept = watch("departmentId");
   useEffect(() => { setDeptId(watchedDept ?? ""); }, [watchedDept]);
@@ -78,7 +106,7 @@ export function AssetFormModal({ open, onClose, category, formData }: Props) {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      await createAsset({
+      const payload = {
         ...values,
         category,
         status: values.status as "ACTIVE",
@@ -87,8 +115,14 @@ export function AssetFormModal({ open, onClose, category, formData }: Props) {
         cavityCount: values.cavityCount ? Number(values.cavityCount) : null,
         moldLifeShots: values.moldLifeShots ? Number(values.moldLifeShots) : null,
         calPeriodMonths: values.calPeriodMonths ? Number(values.calPeriodMonths) : null,
-      });
-      toast.success(`เพิ่ม${FIELD_LABEL[category]}สำเร็จ`);
+      };
+      if (isEdit && editAsset) {
+        await updateAsset(editAsset.id, payload);
+        toast.success("อัปเดตข้อมูลสำเร็จ");
+      } else {
+        await createAsset(payload);
+        toast.success(`เพิ่ม${FIELD_LABEL[category]}สำเร็จ`);
+      }
       reset();
       onClose();
       router.refresh();
@@ -120,7 +154,7 @@ export function AssetFormModal({ open, onClose, category, formData }: Props) {
               className="text-sm font-semibold"
               style={{ color: "var(--text)" }}
             >
-              เพิ่ม{FIELD_LABEL[category]}ใหม่
+              {isEdit ? `แก้ไข${FIELD_LABEL[category]}` : `เพิ่ม${FIELD_LABEL[category]}ใหม่`}
             </Dialog.Title>
             <button
               onClick={onClose}
