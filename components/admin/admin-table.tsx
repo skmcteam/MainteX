@@ -117,7 +117,7 @@ export function AdminTable<T extends { id: string }>({
                         {onEdit && (
                           <button
                             onClick={() => onEdit(row)}
-                            className="rounded-md p-1.5 transition-colors hover:bg-panel-2"
+                            className="flex items-center justify-center rounded-md p-1.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:p-1.5 transition-colors hover:bg-panel-2"
                             style={{ color: "var(--text-sub)" }}
                             title="แก้ไข"
                           >
@@ -127,7 +127,7 @@ export function AdminTable<T extends { id: string }>({
                         {onDelete && (
                           <button
                             onClick={() => onDelete(row)}
-                            className="rounded-md p-1.5 transition-colors"
+                            className="flex items-center justify-center rounded-md p-1.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 transition-colors"
                             style={{ color: "var(--danger)" }}
                             title="ลบ"
                           >

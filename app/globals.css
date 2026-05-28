@@ -210,3 +210,10 @@ body {
     background: var(--panel);
   }
 }
+
+/* ─── Sidebar margin (responsive) ─── */
+[data-sidebar-collapsed] { margin-left: 0; }
+@media (min-width: 768px) {
+  [data-sidebar-collapsed="false"] { margin-left: var(--sidebar-w); }
+  [data-sidebar-collapsed="true"]  { margin-left: 56px; }
+}

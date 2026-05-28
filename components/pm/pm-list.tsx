@@ -2,10 +2,12 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, CalendarCheck, ChevronRight, AlertTriangle, Zap, Loader2 } from "lucide-react";
+import { Plus, Search, CalendarCheck, ChevronRight, AlertTriangle, Zap, Loader2, List, CalendarDays, Grid3x3 } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AssetStatusPill } from "@/components/shared/status-pill";
 import { PMFormModal } from "./pm-form-modal";
+import { PMCalendar } from "./pm-calendar";
+import { PMMatrix } from "./pm-matrix";
 import { formatDate, daysUntil } from "@/lib/utils";
 import type { PMRow, PMFormData } from "@/app/(app)/pm-schedule/actions";
 import { generatePMWorkOrders } from "@/app/(app)/pm-schedule/actions";
@@ -17,6 +19,8 @@ const FILTER_TABS = [
   { key: "due_soon", label: "ใกล้ถึงกำหนด" },
   { key: "normal", label: "ปกติ" },
 ];
+
+type ViewMode = "list" | "calendar" | "matrix";
 
 interface Props {
   data: PMRow[];
@@ -37,6 +41,7 @@ export function PMList({ data, formData }: Props) {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -76,164 +81,207 @@ export function PMList({ data, formData }: Props) {
     normal: data.filter((r) => getDueStatus(r.nextDueDate) === "normal").length,
   }), [data]);
 
+  const VIEW_BUTTONS: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
+    { mode: "list", icon: <List size={13} />, label: "รายการ" },
+    { mode: "calendar", icon: <CalendarDays size={13} />, label: "ปฏิทิน" },
+    { mode: "matrix", icon: <Grid3x3 size={13} />, label: "ตาราง" },
+  ];
+
   return (
     <>
-      <div className="panel-border overflow-hidden">
+      <div className="flex flex-col gap-4">
         {/* Toolbar */}
         <div
-          className="flex flex-wrap items-center gap-2 px-4 py-3"
-          style={{ borderBottom: "0.5px solid var(--line)" }}
+          className="panel-border overflow-hidden"
         >
-          <div className="flex flex-1 items-center gap-1 overflow-x-auto">
-            {FILTER_TABS.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className="flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
-                style={{
-                  background: tab === t.key ? "var(--brand)" : "transparent",
-                  color: tab === t.key ? "#fff" : "var(--text-sub)",
-                }}
-              >
-                {t.label}
-                <span
-                  className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]"
+          <div
+            className="flex flex-wrap items-center gap-2 px-4 py-3"
+            style={{ borderBottom: "0.5px solid var(--line)" }}
+          >
+            {/* View toggle */}
+            <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ background: "var(--panel-2)", border: "0.5px solid var(--line)" }}>
+              {VIEW_BUTTONS.map(({ mode, icon, label }) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all"
                   style={{
-                    background: tab === t.key ? "rgba(255,255,255,0.25)" : "var(--panel-2)",
+                    background: viewMode === mode ? "var(--brand)" : "transparent",
+                    color: viewMode === mode ? "#fff" : "var(--text-sub)",
+                  }}
+                  title={label}
+                >
+                  {icon}
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-1 items-center gap-1 overflow-x-auto">
+              {FILTER_TABS.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className="flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
+                  style={{
+                    background: tab === t.key ? "var(--brand)" : "transparent",
                     color: tab === t.key ? "#fff" : "var(--text-sub)",
                   }}
                 >
-                  {counts[t.key as keyof typeof counts]}
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-sub)" }} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="ค้นหา..."
-                className="rounded-lg py-1.5 pl-7 pr-3 text-xs"
-                style={{ background: "var(--panel-2)", border: "0.5px solid var(--line)", color: "var(--text)", outline: "none", width: "160px" }}
-              />
+                  {t.label}
+                  <span
+                    className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]"
+                    style={{
+                      background: tab === t.key ? "rgba(255,255,255,0.25)" : "var(--panel-2)",
+                      color: tab === t.key ? "#fff" : "var(--text-sub)",
+                    }}
+                  >
+                    {counts[t.key as keyof typeof counts]}
+                  </span>
+                </button>
+              ))}
             </div>
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white active:scale-95 disabled:opacity-60"
-              style={{ background: "var(--success)" }}
-            >
-              {generating ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
-              สร้าง WO จาก PM
-            </button>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white active:scale-95"
-              style={{ background: "var(--brand)" }}
-            >
-              <Plus size={13} />
-              สร้างแผน PM
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-sub)" }} />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="ค้นหา..."
+                  className="rounded-lg py-1.5 pl-7 pr-3 text-xs"
+                  style={{ background: "var(--panel-2)", border: "0.5px solid var(--line)", color: "var(--text)", outline: "none", width: "160px" }}
+                />
+              </div>
+              <button
+                onClick={handleGenerate}
+                disabled={generating}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white active:scale-95 disabled:opacity-60"
+                style={{ background: "var(--success)" }}
+              >
+                {generating ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+                สร้าง WO จาก PM
+              </button>
+              <button
+                onClick={() => setModalOpen(true)}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white active:scale-95"
+                style={{ background: "var(--brand)" }}
+              >
+                <Plus size={13} />
+                สร้างแผน PM
+              </button>
+            </div>
           </div>
+
+          {/* List view */}
+          {viewMode === "list" && (
+            <>
+              {filtered.length === 0 ? (
+                <EmptyState icon={CalendarCheck} title="ไม่พบแผน PM" />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr style={{ borderBottom: "0.5px solid var(--line)" }}>
+                        {["อุปกรณ์", "สถานะ", "ความถี่", "Checklist", "ถัดไป", "ล่าสุด", ""].map((h) => (
+                          <th key={h} className="px-4 py-2.5 text-left font-medium" style={{ color: "var(--text-sub)" }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((pm) => {
+                        const dueStatus = getDueStatus(pm.nextDueDate);
+                        const days = daysUntil(pm.nextDueDate);
+                        return (
+                          <tr key={pm.id} style={{ borderBottom: "0.5px solid var(--line)" }}>
+                            <td className="px-4 py-3">
+                              <p className="font-semibold" style={{ color: "var(--text)" }}>
+                                {pm.asset.code}
+                              </p>
+                              <p style={{ color: "var(--text-sub)" }}>{pm.asset.nameTh}</p>
+                              {pm.asset.department?.nameTh && (
+                                <p style={{ color: "var(--text-sub)" }}>{pm.asset.department.nameTh}</p>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <AssetStatusPill status={pm.asset.status} />
+                            </td>
+                            <td className="px-4 py-3" style={{ color: "var(--text)" }}>
+                              {pm.frequency.nameTh}
+                              {pm.frequency.intervalDays && (
+                                <p style={{ color: "var(--text-sub)" }}>ทุก {pm.frequency.intervalDays} วัน</p>
+                              )}
+                            </td>
+                            <td className="px-4 py-3" style={{ color: "var(--text-sub)" }}>
+                              {pm.checklistTemplate?.nameTh ?? "-"}
+                            </td>
+                            <td className="px-4 py-3">
+                              {pm.nextDueDate ? (
+                                <div className="flex items-center gap-1.5">
+                                  {dueStatus === "overdue" && (
+                                    <AlertTriangle size={12} style={{ color: "var(--danger)" }} />
+                                  )}
+                                  <div>
+                                    <p
+                                      className="font-medium"
+                                      style={{
+                                        color:
+                                          dueStatus === "overdue"
+                                            ? "var(--danger)"
+                                            : dueStatus === "due_soon"
+                                            ? "var(--warning)"
+                                            : "var(--text)",
+                                      }}
+                                    >
+                                      {formatDate(pm.nextDueDate)}
+                                    </p>
+                                    {days != null && (
+                                      <p style={{ color: "var(--text-sub)" }}>
+                                        {days < 0
+                                          ? `เกินกำหนด ${Math.abs(days)} วัน`
+                                          : days === 0
+                                          ? "วันนี้"
+                                          : `อีก ${days} วัน`}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span style={{ color: "var(--text-sub)" }}>—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3" style={{ color: "var(--text-sub)" }}>
+                              {formatDate(pm.lastDoneDate)}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <ChevronRight size={14} style={{ color: "var(--text-sub)" }} />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {filtered.length > 0 && (
+                <div className="px-4 py-2 text-xs" style={{ color: "var(--text-sub)", borderTop: "0.5px solid var(--line)" }}>
+                  แสดง {filtered.length} รายการ
+                </div>
+              )}
+            </>
+          )}
         </div>
 
-        {/* List */}
-        {filtered.length === 0 ? (
-          <EmptyState icon={CalendarCheck} title="ไม่พบแผน PM" />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr style={{ borderBottom: "0.5px solid var(--line)" }}>
-                  {["อุปกรณ์", "สถานะ", "ความถี่", "Checklist", "ถัดไป", "ล่าสุด", ""].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-left font-medium" style={{ color: "var(--text-sub)" }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((pm) => {
-                  const dueStatus = getDueStatus(pm.nextDueDate);
-                  const days = daysUntil(pm.nextDueDate);
-                  return (
-                    <tr key={pm.id} style={{ borderBottom: "0.5px solid var(--line)" }}>
-                      <td className="px-4 py-3">
-                        <p className="font-semibold" style={{ color: "var(--text)" }}>
-                          {pm.asset.code}
-                        </p>
-                        <p style={{ color: "var(--text-sub)" }}>{pm.asset.nameTh}</p>
-                        {pm.asset.department?.nameTh && (
-                          <p style={{ color: "var(--text-sub)" }}>{pm.asset.department.nameTh}</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <AssetStatusPill status={pm.asset.status} />
-                      </td>
-                      <td className="px-4 py-3" style={{ color: "var(--text)" }}>
-                        {pm.frequency.nameTh}
-                        {pm.frequency.intervalDays && (
-                          <p style={{ color: "var(--text-sub)" }}>ทุก {pm.frequency.intervalDays} วัน</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3" style={{ color: "var(--text-sub)" }}>
-                        {pm.checklistTemplate?.nameTh ?? "-"}
-                      </td>
-                      <td className="px-4 py-3">
-                        {pm.nextDueDate ? (
-                          <div className="flex items-center gap-1.5">
-                            {dueStatus === "overdue" && (
-                              <AlertTriangle size={12} style={{ color: "var(--danger)" }} />
-                            )}
-                            <div>
-                              <p
-                                className="font-medium"
-                                style={{
-                                  color:
-                                    dueStatus === "overdue"
-                                      ? "var(--danger)"
-                                      : dueStatus === "due_soon"
-                                      ? "var(--warning)"
-                                      : "var(--text)",
-                                }}
-                              >
-                                {formatDate(pm.nextDueDate)}
-                              </p>
-                              {days != null && (
-                                <p style={{ color: "var(--text-sub)" }}>
-                                  {days < 0
-                                    ? `เกินกำหนด ${Math.abs(days)} วัน`
-                                    : days === 0
-                                    ? "วันนี้"
-                                    : `อีก ${days} วัน`}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <span style={{ color: "var(--text-sub)" }}>—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3" style={{ color: "var(--text-sub)" }}>
-                        {formatDate(pm.lastDoneDate)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <ChevronRight size={14} style={{ color: "var(--text-sub)" }} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        {/* Calendar view */}
+        {viewMode === "calendar" && (
+          <PMCalendar data={filtered} />
         )}
 
-        {filtered.length > 0 && (
-          <div className="px-4 py-2 text-xs" style={{ color: "var(--text-sub)", borderTop: "0.5px solid var(--line)" }}>
-            แสดง {filtered.length} รายการ
-          </div>
+        {/* Matrix view */}
+        {viewMode === "matrix" && (
+          <PMMatrix data={filtered} />
         )}
       </div>
 

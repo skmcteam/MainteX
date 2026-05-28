@@ -86,7 +86,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 z-40 flex h-screen flex-col transition-all duration-200"
+      className="fixed left-0 top-0 z-40 hidden md:flex h-screen flex-col transition-all duration-200"
       style={{
         width: collapsed ? "56px" : "var(--sidebar-w)",
         background: "var(--panel)",

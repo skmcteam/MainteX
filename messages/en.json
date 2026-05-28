@@ -11,7 +11,9 @@
     "instruments": "Instruments",
     "spareParts": "Spare Parts",
     "reports": "Reports",
-    "admin": "Settings"
+    "admin": "Settings",
+    "scan": "Scan",
+    "profile": "Profile"
   },
   "common": {
     "search": "Search...",

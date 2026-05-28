@@ -11,6 +11,8 @@ import {
   Layers,
   Monitor,
   Thermometer,
+  ScanLine,
+  User,
 } from "lucide-react";
 
 export const mainNav = [
@@ -102,21 +104,21 @@ export const bottomNav = [
     labelKey: "nav.workOrders",
   },
   {
-    key: "assets",
-    href: "/assets/machines",
-    icon: Cpu,
-    labelKey: "nav.assets",
+    key: "pmSchedule",
+    href: "/pm-schedule",
+    icon: CalendarClock,
+    labelKey: "nav.pmSchedule",
   },
   {
-    key: "spareParts",
-    href: "/spare-parts",
-    icon: Package,
-    labelKey: "nav.spareParts",
+    key: "scan",
+    href: "/scan",
+    icon: ScanLine,
+    labelKey: "nav.scan",
   },
   {
-    key: "admin",
-    href: "/admin",
-    icon: Settings,
-    labelKey: "nav.admin",
+    key: "profile",
+    href: "/profile",
+    icon: User,
+    labelKey: "nav.profile",
   },
 ];

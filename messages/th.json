@@ -11,7 +11,9 @@
     "instruments": "เครื่องมือวัด",
     "spareParts": "อะไหล่",
     "reports": "รายงาน",
-    "admin": "ตั้งค่า"
+    "admin": "ตั้งค่า",
+    "scan": "สแกน",
+    "profile": "โปรไฟล์"
   },
   "common": {
     "search": "ค้นหา...",
