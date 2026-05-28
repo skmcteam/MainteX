@@ -18,9 +18,11 @@ pnpm install
 # 2. Generate Prisma client (required after install due to pnpm build scripts)
 node_modules/.bin/prisma generate
 
-# 3. Copy env
+# 3. Copy env and fill in required values
 cp .env.example .env
-# Edit .env — update DATABASE_URL with your PostgreSQL user
+# Edit .env:
+#   DATABASE_URL  — replace <your-pg-user> with your local PostgreSQL username
+#   AUTH_SECRET   — run: openssl rand -base64 32
 
 # 4. Create database and run migrations
 createdb skmc_cmms
