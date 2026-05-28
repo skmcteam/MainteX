@@ -87,14 +87,14 @@ export async function getCostByDepartment() {
   const rows = await prisma.$queryRaw<Row[]>`
     SELECT
       d."nameTh" AS dept_name,
-      COALESCE(SUM(wo."laborCost"), 0)::float AS labor_cost,
-      COALESCE(SUM(wo."totalPartsCost"), 0)::float AS parts_cost
+      CAST(COALESCE(SUM(wo."laborCost"), 0) AS FLOAT) AS labor_cost,
+      CAST(COALESCE(SUM(wo."totalPartsCost"), 0) AS FLOAT) AS parts_cost
     FROM "WorkOrder" wo
     JOIN "Department" d ON wo."departmentId" = d.id
     WHERE wo."isDeleted" = false
       AND wo."createdAt" >= ${since}
     GROUP BY d.id, d."nameTh"
-    ORDER BY (labor_cost + parts_cost) DESC
+    ORDER BY (CAST(COALESCE(SUM(wo."laborCost"), 0) AS FLOAT) + CAST(COALESCE(SUM(wo."totalPartsCost"), 0) AS FLOAT)) DESC
   `;
   return rows.map((r) => ({
     dept: r.dept_name,
@@ -172,7 +172,8 @@ export async function getReportKPIs() {
     prisma.workOrder.count({ where: { isDeleted: false, status: { in: ["OPEN", "IN_PROGRESS"] } } }),
     prisma.workOrder.count({ where: { isDeleted: false, status: "DONE", createdAt: { gte: since } } }),
     prisma.asset.count({ where: { isDeleted: false, status: "ACTIVE" } }),
-    prisma.sparePart.count({ where: { isDeleted: false, stockOnHand: { lte: prisma.sparePart.fields.reorderPoint } } }),
+    prisma.sparePart.findMany({ where: { isDeleted: false }, select: { stockOnHand: true, reorderPoint: true } })
+      .then(parts => parts.filter(p => Number(p.stockOnHand) <= Number(p.reorderPoint)).length),
     prisma.workOrder.findMany({
       where: { status: "DONE", type: { code: "CM" }, startTime: { not: null }, endTime: { not: null }, isDeleted: false, createdAt: { gte: since } },
       select: { startTime: true, endTime: true, holdDuration: true },
