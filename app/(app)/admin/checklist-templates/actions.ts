@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireRole, writeAuditLog } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -41,26 +42,32 @@ const TemplateSchema = z.object({
 });
 
 export async function createChecklistTemplate(input: z.infer<typeof TemplateSchema>) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const data = TemplateSchema.parse(input);
-  await prisma.checklistTemplate.create({
+  const tmpl = await prisma.checklistTemplate.create({
     data: { ...data, assetClassId: data.assetClassId || null, isActive: true },
   });
+  await writeAuditLog({ userId: session.user.id, entity: "ChecklistTemplate", entityId: tmpl.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/admin/checklist-templates");
   return { success: true };
 }
 
 export async function updateChecklistTemplate(id: string, input: z.infer<typeof TemplateSchema> & { isActive?: boolean }) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const data = TemplateSchema.parse(input);
   await prisma.checklistTemplate.update({
     where: { id },
     data: { ...data, assetClassId: data.assetClassId || null, ...(input.isActive !== undefined ? { isActive: input.isActive } : {}) },
   });
+  await writeAuditLog({ userId: session.user.id, entity: "ChecklistTemplate", entityId: id, action: "UPDATE" });
   revalidatePath("/admin/checklist-templates");
   return { success: true };
 }
 
 export async function toggleChecklistTemplate(id: string, isActive: boolean) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   await prisma.checklistTemplate.update({ where: { id }, data: { isActive } });
+  await writeAuditLog({ userId: session.user.id, entity: "ChecklistTemplate", entityId: id, action: "UPDATE", after: { isActive } });
   revalidatePath("/admin/checklist-templates");
   return { success: true };
 }
@@ -121,16 +128,16 @@ const ItemSchema = z.object({
 });
 
 export async function addChecklistItem(input: z.infer<typeof ItemSchema>) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const data = ItemSchema.parse(input);
 
-  // Next sortOrder = max + 1
   const agg = await prisma.checklistItem.aggregate({
     where: { templateId: data.templateId },
     _max: { sortOrder: true },
   });
   const nextOrder = (agg._max.sortOrder ?? 0) + 1;
 
-  await prisma.checklistItem.create({
+  const item = await prisma.checklistItem.create({
     data: {
       templateId: data.templateId,
       descriptionTh: data.descriptionTh,
@@ -142,6 +149,7 @@ export async function addChecklistItem(input: z.infer<typeof ItemSchema>) {
       sortOrder: nextOrder,
     },
   });
+  await writeAuditLog({ userId: session.user.id, entity: "ChecklistItem", entityId: item.id, action: "CREATE", after: { templateId: data.templateId } });
 
   revalidatePath(`/admin/checklist-templates/${data.templateId}`);
   return { success: true };
@@ -157,6 +165,7 @@ const UpdateItemSchema = z.object({
 });
 
 export async function updateChecklistItem(id: string, input: z.infer<typeof UpdateItemSchema>) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const data = UpdateItemSchema.parse(input);
   const item = await prisma.checklistItem.findUnique({ where: { id }, select: { templateId: true } });
   if (!item) throw new Error("ไม่พบรายการ");
@@ -172,18 +181,20 @@ export async function updateChecklistItem(id: string, input: z.infer<typeof Upda
       isCritical: data.isCritical,
     },
   });
+  await writeAuditLog({ userId: session.user.id, entity: "ChecklistItem", entityId: id, action: "UPDATE" });
 
   revalidatePath(`/admin/checklist-templates/${item.templateId}`);
   return { success: true };
 }
 
 export async function deleteChecklistItem(id: string) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const item = await prisma.checklistItem.findUnique({ where: { id }, select: { templateId: true, sortOrder: true } });
   if (!item) throw new Error("ไม่พบรายการ");
 
   await prisma.checklistItem.delete({ where: { id } });
+  await writeAuditLog({ userId: session.user.id, entity: "ChecklistItem", entityId: id, action: "DELETE" });
 
-  // Re-number remaining items to close the gap
   const remaining = await prisma.checklistItem.findMany({
     where: { templateId: item.templateId },
     orderBy: { sortOrder: "asc" },
@@ -200,13 +211,13 @@ export async function deleteChecklistItem(id: string) {
 }
 
 export async function moveChecklistItem(id: string, direction: "up" | "down") {
+  await requireRole(["SYSTEM_ADMIN"]);
   const item = await prisma.checklistItem.findUnique({
     where: { id },
     select: { templateId: true, sortOrder: true },
   });
   if (!item) throw new Error("ไม่พบรายการ");
 
-  // Find the item to swap with
   const sibling = await prisma.checklistItem.findFirst({
     where: {
       templateId: item.templateId,
@@ -215,9 +226,8 @@ export async function moveChecklistItem(id: string, direction: "up" | "down") {
     orderBy: { sortOrder: direction === "up" ? "desc" : "asc" },
     select: { id: true, sortOrder: true },
   });
-  if (!sibling) return { success: true }; // already at edge
+  if (!sibling) return { success: true };
 
-  // Swap sortOrders
   await prisma.$transaction([
     prisma.checklistItem.update({ where: { id }, data: { sortOrder: sibling.sortOrder } }),
     prisma.checklistItem.update({ where: { id: sibling.id }, data: { sortOrder: item.sortOrder } }),

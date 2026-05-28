@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireRole, writeAuditLog } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { AssetCategory, Criticality } from "@prisma/client";
@@ -49,10 +50,11 @@ const UserCreateSchema = z.object({
 });
 
 export async function createUser(input: z.infer<typeof UserCreateSchema>) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const data = UserCreateSchema.parse(input);
   if (!data.password) throw new Error("กรุณาระบุรหัสผ่าน");
   const passwordHash = await bcrypt.hash(data.password, 10);
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email: data.email,
       nameTh: data.nameTh,
@@ -65,23 +67,28 @@ export async function createUser(input: z.infer<typeof UserCreateSchema>) {
       isActive: true,
     },
   });
+  await writeAuditLog({ userId: session.user.id, entity: "User", entityId: user.id, action: "CREATE", after: { email: data.email, nameTh: data.nameTh } });
   revalidatePath("/admin/users");
   return { success: true };
 }
 
 export async function updateUser(id: string, input: Omit<z.infer<typeof UserCreateSchema>, "password"> & { password?: string }) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const { password, ...data } = input;
   const updateData: Record<string, unknown> = { ...data };
   if (password && password.length >= 6) {
     updateData.passwordHash = await bcrypt.hash(password, 10);
   }
   await prisma.user.update({ where: { id }, data: updateData });
+  await writeAuditLog({ userId: session.user.id, entity: "User", entityId: id, action: "UPDATE", after: { email: data.email, nameTh: data.nameTh } });
   revalidatePath("/admin/users");
   return { success: true };
 }
 
 export async function toggleUserActive(id: string, isActive: boolean) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   await prisma.user.update({ where: { id }, data: { isActive } });
+  await writeAuditLog({ userId: session.user.id, entity: "User", entityId: id, action: "UPDATE", after: { isActive } });
   revalidatePath("/admin/users");
   return { success: true };
 }
@@ -117,15 +124,19 @@ const DeptSchema = z.object({
 });
 
 export async function createDepartment(input: z.infer<typeof DeptSchema>) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const data = DeptSchema.parse(input);
-  await prisma.department.create({ data });
+  const dept = await prisma.department.create({ data });
+  await writeAuditLog({ userId: session.user.id, entity: "Department", entityId: dept.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/admin/departments");
   return { success: true };
 }
 
 export async function updateDepartment(id: string, input: z.infer<typeof DeptSchema>) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const data = DeptSchema.parse(input);
   await prisma.department.update({ where: { id }, data });
+  await writeAuditLog({ userId: session.user.id, entity: "Department", entityId: id, action: "UPDATE", after: { code: data.code } });
   revalidatePath("/admin/departments");
   return { success: true };
 }
@@ -140,13 +151,18 @@ const SectionSchema = z.object({
 });
 
 export async function createSection(input: z.infer<typeof SectionSchema>) {
-  await prisma.section.create({ data: SectionSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = SectionSchema.parse(input);
+  const section = await prisma.section.create({ data });
+  await writeAuditLog({ userId: session.user.id, entity: "Section", entityId: section.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/admin/departments");
   return { success: true };
 }
 
 export async function updateSection(id: string, input: z.infer<typeof SectionSchema>) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   await prisma.section.update({ where: { id }, data: SectionSchema.parse(input) });
+  await writeAuditLog({ userId: session.user.id, entity: "Section", entityId: id, action: "UPDATE" });
   revalidatePath("/admin/departments");
   return { success: true };
 }
@@ -155,6 +171,7 @@ export async function updateSection(id: string, input: z.infer<typeof SectionSch
 
 export async function getAreas() {
   return prisma.area.findMany({
+    where: { isDeleted: false },
     include: { _count: { select: { assets: true } } },
     orderBy: { code: "asc" },
   });
@@ -167,19 +184,27 @@ const AreaSchema = z.object({
 });
 
 export async function createArea(input: z.infer<typeof AreaSchema>) {
-  await prisma.area.create({ data: AreaSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = AreaSchema.parse(input);
+  const area = await prisma.area.create({ data });
+  await writeAuditLog({ userId: session.user.id, entity: "Area", entityId: area.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/admin/areas");
   return { success: true };
 }
 
 export async function updateArea(id: string, input: z.infer<typeof AreaSchema>) {
-  await prisma.area.update({ where: { id }, data: AreaSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = AreaSchema.parse(input);
+  await prisma.area.update({ where: { id }, data });
+  await writeAuditLog({ userId: session.user.id, entity: "Area", entityId: id, action: "UPDATE", after: { code: data.code } });
   revalidatePath("/admin/areas");
   return { success: true };
 }
 
 export async function deleteArea(id: string) {
-  await prisma.area.delete({ where: { id } });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  await prisma.area.update({ where: { id }, data: { isDeleted: true } });
+  await writeAuditLog({ userId: session.user.id, entity: "Area", entityId: id, action: "DELETE" });
   revalidatePath("/admin/areas");
   return { success: true };
 }
@@ -202,13 +227,19 @@ const WOTypeSchema = z.object({
 });
 
 export async function createWOType(input: z.infer<typeof WOTypeSchema>) {
-  await prisma.wOType.create({ data: WOTypeSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = WOTypeSchema.parse(input);
+  const wotype = await prisma.wOType.create({ data });
+  await writeAuditLog({ userId: session.user.id, entity: "WOType", entityId: wotype.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/admin/wo-types");
   return { success: true };
 }
 
 export async function updateWOType(id: string, input: z.infer<typeof WOTypeSchema>) {
-  await prisma.wOType.update({ where: { id }, data: WOTypeSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = WOTypeSchema.parse(input);
+  await prisma.wOType.update({ where: { id }, data });
+  await writeAuditLog({ userId: session.user.id, entity: "WOType", entityId: id, action: "UPDATE" });
   revalidatePath("/admin/wo-types");
   return { success: true };
 }
@@ -232,13 +263,19 @@ const PrioritySchema = z.object({
 });
 
 export async function createPriority(input: z.infer<typeof PrioritySchema>) {
-  await prisma.priority.create({ data: PrioritySchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = PrioritySchema.parse(input);
+  const priority = await prisma.priority.create({ data });
+  await writeAuditLog({ userId: session.user.id, entity: "Priority", entityId: priority.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/admin/priorities");
   return { success: true };
 }
 
 export async function updatePriority(id: string, input: z.infer<typeof PrioritySchema>) {
-  await prisma.priority.update({ where: { id }, data: PrioritySchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = PrioritySchema.parse(input);
+  await prisma.priority.update({ where: { id }, data });
+  await writeAuditLog({ userId: session.user.id, entity: "Priority", entityId: id, action: "UPDATE" });
   revalidatePath("/admin/priorities");
   return { success: true };
 }
@@ -262,13 +299,19 @@ const AssetClassSchema = z.object({
 });
 
 export async function createAssetClass(input: z.infer<typeof AssetClassSchema>) {
-  await prisma.assetClass.create({ data: AssetClassSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = AssetClassSchema.parse(input);
+  const ac = await prisma.assetClass.create({ data });
+  await writeAuditLog({ userId: session.user.id, entity: "AssetClass", entityId: ac.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/admin/asset-classes");
   return { success: true };
 }
 
 export async function updateAssetClass(id: string, input: z.infer<typeof AssetClassSchema>) {
-  await prisma.assetClass.update({ where: { id }, data: AssetClassSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = AssetClassSchema.parse(input);
+  await prisma.assetClass.update({ where: { id }, data });
+  await writeAuditLog({ userId: session.user.id, entity: "AssetClass", entityId: id, action: "UPDATE" });
   revalidatePath("/admin/asset-classes");
   return { success: true };
 }
@@ -293,13 +336,19 @@ const CalLabSchema = z.object({
 });
 
 export async function createCalibrationLab(input: z.infer<typeof CalLabSchema>) {
-  await prisma.calibrationLab.create({ data: CalLabSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = CalLabSchema.parse(input);
+  const lab = await prisma.calibrationLab.create({ data });
+  await writeAuditLog({ userId: session.user.id, entity: "CalibrationLab", entityId: lab.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/admin/calibration-labs");
   return { success: true };
 }
 
 export async function updateCalibrationLab(id: string, input: z.infer<typeof CalLabSchema>) {
-  await prisma.calibrationLab.update({ where: { id }, data: CalLabSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = CalLabSchema.parse(input);
+  await prisma.calibrationLab.update({ where: { id }, data });
+  await writeAuditLog({ userId: session.user.id, entity: "CalibrationLab", entityId: id, action: "UPDATE" });
   revalidatePath("/admin/calibration-labs");
   return { success: true };
 }
@@ -325,19 +374,27 @@ const SupplierSchema = z.object({
 });
 
 export async function createSupplier(input: z.infer<typeof SupplierSchema>) {
-  await prisma.supplier.create({ data: SupplierSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = SupplierSchema.parse(input);
+  const supplier = await prisma.supplier.create({ data });
+  await writeAuditLog({ userId: session.user.id, entity: "Supplier", entityId: supplier.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/admin/suppliers");
   return { success: true };
 }
 
 export async function updateSupplier(id: string, input: z.infer<typeof SupplierSchema>) {
-  await prisma.supplier.update({ where: { id }, data: SupplierSchema.parse(input) });
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = SupplierSchema.parse(input);
+  await prisma.supplier.update({ where: { id }, data });
+  await writeAuditLog({ userId: session.user.id, entity: "Supplier", entityId: id, action: "UPDATE" });
   revalidatePath("/admin/suppliers");
   return { success: true };
 }
 
 export async function toggleSupplier(id: string, isActive: boolean) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   await prisma.supplier.update({ where: { id }, data: { isActive } });
+  await writeAuditLog({ userId: session.user.id, entity: "Supplier", entityId: id, action: "UPDATE", after: { isActive } });
   revalidatePath("/admin/suppliers");
   return { success: true };
 }
@@ -349,7 +406,9 @@ export async function getNotificationRules() {
 }
 
 export async function toggleNotificationRule(id: string, isActive: boolean) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   await prisma.notificationRule.update({ where: { id }, data: { isActive } });
+  await writeAuditLog({ userId: session.user.id, entity: "NotificationRule", entityId: id, action: "UPDATE", after: { isActive } });
   revalidatePath("/admin/notification-rules");
   return { success: true };
 }
@@ -361,8 +420,10 @@ const NotifRuleSchema = z.object({
 });
 
 export async function createNotificationRule(input: z.infer<typeof NotifRuleSchema>) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
   const data = NotifRuleSchema.parse(input);
-  await prisma.notificationRule.create({ data: { ...data, isActive: true } });
+  const rule = await prisma.notificationRule.create({ data: { ...data, isActive: true } });
+  await writeAuditLog({ userId: session.user.id, entity: "NotificationRule", entityId: rule.id, action: "CREATE", after: { event: data.event } });
   revalidatePath("/admin/notification-rules");
   return { success: true };
 }

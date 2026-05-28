@@ -54,6 +54,7 @@ model Area {
   code      String   @unique
   nameTh    String
   nameEn    String
+  isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   assets    Asset[]
@@ -288,6 +289,7 @@ model Calibration {
   notes       String?
   workOrderId String?
   workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+  isDeleted   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   createdBy   String?
@@ -529,6 +531,7 @@ model PMPlan {
   lastDoneDate      DateTime?
   nextDueDate       DateTime?
   isActive          Boolean      @default(true)
+  isDeleted         Boolean      @default(false)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   createdBy         String?

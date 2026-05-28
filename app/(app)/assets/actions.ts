@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth, writeAuditLog } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { AssetCategory, AssetStatus } from "@prisma/client";
@@ -68,10 +69,12 @@ export async function getAsset(id: string) {
         take: 20,
       },
       pmPlans: {
+        where: { isDeleted: false },
         include: { frequency: true, checklistTemplate: true },
         orderBy: { nextDueDate: "asc" },
       },
       calibrations: {
+        where: { isDeleted: false },
         include: { lab: true },
         orderBy: { calDate: "desc" },
         take: 10,
@@ -174,7 +177,7 @@ export async function getAssetFormData(category: AssetCategory) {
         orderBy: { code: "asc" },
         include: { sections: { orderBy: { code: "asc" } } },
       }),
-      prisma.area.findMany({ orderBy: { code: "asc" } }),
+      prisma.area.findMany({ where: { isDeleted: false }, orderBy: { code: "asc" } }),
       category === "INSTRUMENT"
         ? prisma.instrumentType.findMany({ orderBy: { code: "asc" } })
         : Promise.resolve([]),
@@ -223,22 +226,28 @@ const AssetSchema = z.object({
 export type AssetCreateInput = z.infer<typeof AssetSchema>;
 
 export async function createAsset(input: AssetCreateInput) {
+  const session = await requireAuth();
   const data = AssetSchema.parse(input);
-  const asset = await prisma.asset.create({ data });
+  const asset = await prisma.asset.create({ data: { ...data, createdBy: session.user.id } });
+  await writeAuditLog({ userId: session.user.id, entity: "Asset", entityId: asset.id, action: "CREATE", after: { code: data.code, category: data.category } });
   revalidatePath("/assets");
   return { success: true, id: asset.id };
 }
 
 export async function updateAsset(id: string, input: Partial<AssetCreateInput>) {
+  const session = await requireAuth();
   const data = AssetSchema.partial().parse(input);
-  await prisma.asset.update({ where: { id }, data });
+  await prisma.asset.update({ where: { id }, data: { ...data, updatedBy: session.user.id } });
+  await writeAuditLog({ userId: session.user.id, entity: "Asset", entityId: id, action: "UPDATE", after: data as Record<string, unknown> });
   revalidatePath("/assets");
   revalidatePath(`/assets/${id}`);
   return { success: true };
 }
 
 export async function updateAssetStatus(id: string, status: AssetStatus) {
-  await prisma.asset.update({ where: { id }, data: { status } });
+  const session = await requireAuth();
+  await prisma.asset.update({ where: { id }, data: { status, updatedBy: session.user.id } });
+  await writeAuditLog({ userId: session.user.id, entity: "Asset", entityId: id, action: "UPDATE", after: { status } });
   revalidatePath("/assets");
   revalidatePath(`/assets/${id}`);
   return { success: true };

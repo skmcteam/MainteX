@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth, writeAuditLog } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createNotificationEvent } from "@/lib/notifications";
@@ -61,15 +62,19 @@ const SparePartSchema = z.object({
 });
 
 export async function createSparePart(input: z.infer<typeof SparePartSchema>) {
+  const session = await requireAuth();
   const data = SparePartSchema.parse(input);
-  await prisma.sparePart.create({ data: { ...data, stockOnHand: 0 } });
+  const part = await prisma.sparePart.create({ data: { ...data, stockOnHand: 0, createdBy: session.user.id } });
+  await writeAuditLog({ userId: session.user.id, entity: "SparePart", entityId: part.id, action: "CREATE", after: { code: data.code } });
   revalidatePath("/spare-parts");
   return { success: true };
 }
 
 export async function updateSparePart(id: string, input: z.infer<typeof SparePartSchema>) {
+  const session = await requireAuth();
   const data = SparePartSchema.parse(input);
   await prisma.sparePart.update({ where: { id }, data });
+  await writeAuditLog({ userId: session.user.id, entity: "SparePart", entityId: id, action: "UPDATE", after: { code: data.code } });
   revalidatePath("/spare-parts");
   return { success: true };
 }
@@ -81,15 +86,26 @@ const AdjustSchema = z.object({
 });
 
 export async function adjustStock(input: z.infer<typeof AdjustSchema>) {
+  const session = await requireAuth();
   const data = AdjustSchema.parse(input);
   const part = await prisma.sparePart.findUnique({
     where: { id: data.sparePartId },
     select: { code: true, nameTh: true, stockOnHand: true, reorderPoint: true },
   });
   if (!part) throw new Error("ไม่พบอะไหล่");
-  const newStock = Number(part.stockOnHand) + data.delta;
+  const prevStock = Number(part.stockOnHand);
+  const newStock = prevStock + data.delta;
   if (newStock < 0) throw new Error("สต็อกไม่เพียงพอ");
   await prisma.sparePart.update({ where: { id: data.sparePartId }, data: { stockOnHand: newStock } });
+
+  await writeAuditLog({
+    userId: session.user.id,
+    entity: "SparePart",
+    entityId: data.sparePartId,
+    action: "UPDATE",
+    before: { stockOnHand: prevStock },
+    after: { stockOnHand: newStock, delta: data.delta, reason: data.reason },
+  });
 
   if (data.delta < 0 && newStock <= Number(part.reorderPoint)) {
     await createNotificationEvent({

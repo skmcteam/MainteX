@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAuth, writeAuditLog } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { WOStatus } from "@prisma/client";
@@ -160,12 +160,10 @@ const WOCreateSchema = z.object({
 });
 
 export async function createWorkOrder(input: z.infer<typeof WOCreateSchema>) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
+  const session = await requireAuth();
 
   const data = WOCreateSchema.parse(input);
 
-  // Atomic WO number: increment and return in one query
   const seriesCheck = await prisma.wONumberSeries.findFirst();
   if (!seriesCheck) {
     await prisma.wONumberSeries.create({ data: { pattern: "WO-{YY}{MM}-{####}", lastNumber: 0 } });
@@ -194,8 +192,17 @@ export async function createWorkOrder(input: z.infer<typeof WOCreateSchema>) {
       departmentId: data.departmentId || asset?.departmentId,
       assigneeId: data.assigneeId || null,
       creatorId: session.user.id,
+      createdBy: session.user.id,
       status: "OPEN",
     },
+  });
+
+  await writeAuditLog({
+    userId: session.user.id,
+    entity: "WorkOrder",
+    entityId: wo.id,
+    action: "CREATE",
+    after: { woNumber, title: data.title, assetId: data.assetId },
   });
 
   revalidatePath("/work-orders");
@@ -227,7 +234,9 @@ export async function updateWOStatus(
     actionCodeId?: string;
   }
 ) {
-  const update: Record<string, unknown> = { status };
+  const session = await requireAuth();
+
+  const update: Record<string, unknown> = { status, updatedBy: session.user.id };
   if (status === "IN_PROGRESS") update.startTime = new Date();
   if (status === "DONE") {
     update.endTime = new Date();
@@ -239,6 +248,13 @@ export async function updateWOStatus(
   if (extras?.actionCodeId) update.actionCodeId = extras.actionCodeId;
 
   await prisma.workOrder.update({ where: { id }, data: update });
+  await writeAuditLog({
+    userId: session.user.id,
+    entity: "WorkOrder",
+    entityId: id,
+    action: "UPDATE",
+    after: { status },
+  });
   revalidatePath("/work-orders");
   revalidatePath(`/work-orders/${id}`);
   return { success: true };
@@ -254,6 +270,7 @@ export async function getClosureFormData() {
 }
 
 export async function updateChecklistItem(id: string, status: "PENDING" | "PASS" | "FAIL" | "NA", notes?: string) {
+  await requireAuth();
   await prisma.wOChecklistItem.update({
     where: { id },
     data: { status, ...(notes !== undefined ? { notes } : {}) },
@@ -285,6 +302,7 @@ const WOPartSchema = z.object({
 });
 
 export async function addPartToWO(input: z.infer<typeof WOPartSchema>) {
+  const session = await requireAuth();
   const data = WOPartSchema.parse(input);
   const part = await prisma.sparePart.findUnique({ where: { id: data.sparePartId }, select: { stockOnHand: true, unitCost: true } });
   if (!part) throw new Error("ไม่พบอะไหล่");
@@ -321,14 +339,17 @@ export async function addPartToWO(input: z.infer<typeof WOPartSchema>) {
     });
   }
 
-  // Recalculate totalPartsCost
-  const partsTotal = await prisma.wOSparePart.aggregate({
-    where: { workOrderId: data.workOrderId },
-    _sum: { quantity: true },
-  });
   const allParts = await prisma.wOSparePart.findMany({ where: { workOrderId: data.workOrderId }, select: { quantity: true, unitCost: true } });
   const totalPartsCost = allParts.reduce((s, p) => s + Number(p.quantity) * Number(p.unitCost ?? 0), 0);
-  await prisma.workOrder.update({ where: { id: data.workOrderId }, data: { totalPartsCost } });
+  await prisma.workOrder.update({ where: { id: data.workOrderId }, data: { totalPartsCost, updatedBy: session.user.id } });
+
+  await writeAuditLog({
+    userId: session.user.id,
+    entity: "WorkOrder",
+    entityId: data.workOrderId,
+    action: "UPDATE",
+    after: { action: "addPart", sparePartId: data.sparePartId, quantity: data.quantity },
+  });
 
   revalidatePath(`/work-orders/${data.workOrderId}`);
   revalidatePath("/spare-parts");
@@ -336,6 +357,7 @@ export async function addPartToWO(input: z.infer<typeof WOPartSchema>) {
 }
 
 export async function removePartFromWO(woPartId: string) {
+  const session = await requireAuth();
   const woPart = await prisma.wOSparePart.findUnique({ where: { id: woPartId }, select: { workOrderId: true, sparePartId: true, quantity: true } });
   if (!woPart) throw new Error("ไม่พบรายการ");
 
@@ -346,7 +368,15 @@ export async function removePartFromWO(woPartId: string) {
 
   const allParts = await prisma.wOSparePart.findMany({ where: { workOrderId: woPart.workOrderId }, select: { quantity: true, unitCost: true } });
   const totalPartsCost = allParts.reduce((s, p) => s + Number(p.quantity) * Number(p.unitCost ?? 0), 0);
-  await prisma.workOrder.update({ where: { id: woPart.workOrderId }, data: { totalPartsCost } });
+  await prisma.workOrder.update({ where: { id: woPart.workOrderId }, data: { totalPartsCost, updatedBy: session.user.id } });
+
+  await writeAuditLog({
+    userId: session.user.id,
+    entity: "WorkOrder",
+    entityId: woPart.workOrderId,
+    action: "UPDATE",
+    after: { action: "removePart", woPartId },
+  });
 
   revalidatePath(`/work-orders/${woPart.workOrderId}`);
   revalidatePath("/spare-parts");

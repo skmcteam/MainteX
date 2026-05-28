@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth, writeAuditLog } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -14,6 +15,7 @@ export async function getCalibrationAssets() {
       calLab: { select: { code: true, nameTh: true } },
       department: { select: { nameTh: true } },
       calibrations: {
+        where: { isDeleted: false },
         orderBy: { calDate: "desc" },
         take: 1,
         select: {
@@ -84,11 +86,12 @@ const CalibrationSchema = z.object({
 });
 
 export async function recordCalibration(input: z.infer<typeof CalibrationSchema>) {
+  const session = await requireAuth();
   const data = CalibrationSchema.parse(input);
   const calDate = new Date(data.calDate);
   const nextCalDate = new Date(data.nextCalDate);
 
-  await prisma.$transaction([
+  const [cal] = await prisma.$transaction([
     prisma.calibration.create({
       data: {
         assetId: data.assetId,
@@ -98,6 +101,7 @@ export async function recordCalibration(input: z.infer<typeof CalibrationSchema>
         labId: data.labId,
         result: data.result,
         notes: data.notes,
+        createdBy: session.user.id,
       },
     }),
     prisma.asset.update({
@@ -106,9 +110,18 @@ export async function recordCalibration(input: z.infer<typeof CalibrationSchema>
         lastCalDate: calDate,
         nextCalDate,
         calStatus: "NORMAL",
+        updatedBy: session.user.id,
       },
     }),
   ]);
+
+  await writeAuditLog({
+    userId: session.user.id,
+    entity: "Calibration",
+    entityId: cal.id,
+    action: "CREATE",
+    after: { assetId: data.assetId, calDate: data.calDate, nextCalDate: data.nextCalDate },
+  });
 
   revalidatePath("/calibration");
   return { success: true };
