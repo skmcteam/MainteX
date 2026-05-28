@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Wrench, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/store/sidebar";
 import { mainNav, assetNav, secondaryNav } from "./nav-items";
@@ -102,7 +102,7 @@ export function Sidebar() {
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
           style={{ background: "var(--brand)", color: "#fff" }}
         >
-          <Wrench size={14} />
+          <span style={{ fontSize: "13px", fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1 }}>M</span>
         </div>
         {!collapsed && (
           <div className="min-w-0">
