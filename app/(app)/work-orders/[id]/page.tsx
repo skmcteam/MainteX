@@ -8,10 +8,11 @@ import {
   User,
   Clock,
 } from "lucide-react";
-import { getWorkOrder } from "@/app/(app)/work-orders/actions";
+import { getWorkOrder, getAvailableParts } from "@/app/(app)/work-orders/actions";
 import { WOStatusPill, PriorityPill } from "@/components/shared/status-pill";
 import { WOStatusActions } from "@/components/work-orders/wo-status-actions";
 import { WOChecklist } from "@/components/work-orders/wo-checklist";
+import { WOPartsPanel } from "@/components/work-orders/wo-parts-panel";
 import { formatDate, formatDateTime, formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,10 @@ interface Props {
 
 export default async function WorkOrderDetailPage({ params }: Props) {
   const { id } = await params;
-  const wo = await getWorkOrder(id);
+  const [wo, availableParts] = await Promise.all([
+    getWorkOrder(id),
+    getAvailableParts(),
+  ]);
   if (!wo) notFound();
 
   const durationMinutes =
@@ -113,44 +117,13 @@ export default async function WorkOrderDetailPage({ params }: Props) {
             <WOChecklist woId={wo.id} items={wo.checklistItems} />
           )}
 
-          {/* Parts used */}
-          {wo.parts.length > 0 && (
-            <Section icon={Package} title={`อะไหล่ที่ใช้ (${wo.parts.length})`}>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr style={{ borderBottom: "0.5px solid var(--line)" }}>
-                    {["รหัส", "ชื่ออะไหล่", "จำนวน", "ต้นทุน"].map((h) => (
-                      <th
-                        key={h}
-                        className="pb-2 text-left font-medium"
-                        style={{ color: "var(--text-sub)" }}
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {wo.parts.map((p) => (
-                    <tr key={p.id} style={{ borderBottom: "0.5px solid var(--line)" }}>
-                      <td className="py-2 font-mono-num" style={{ color: "var(--brand)" }}>
-                        {p.sparePart.code}
-                      </td>
-                      <td className="py-2" style={{ color: "var(--text)" }}>
-                        {p.sparePart.nameTh}
-                      </td>
-                      <td className="py-2" style={{ color: "var(--text)" }}>
-                        {p.quantity} {p.sparePart.unit?.code ?? ""}
-                      </td>
-                      <td className="py-2" style={{ color: "var(--text)" }}>
-                        {p.unitCost ? formatCurrency(p.quantity * p.unitCost) : "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Section>
-          )}
+          {/* Parts used — interactive panel */}
+          <WOPartsPanel
+            woId={wo.id}
+            parts={wo.parts}
+            availableParts={availableParts}
+            woStatus={wo.status}
+          />
 
           {/* Approvals */}
           {wo.approvals.length > 0 && (

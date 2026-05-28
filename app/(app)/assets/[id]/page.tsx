@@ -11,6 +11,7 @@ import {
 import { getAsset, getAssetFormData } from "@/app/(app)/assets/actions";
 import { AssetStatusPill, CalStatusPill, WOStatusPill, PriorityPill } from "@/components/shared/status-pill";
 import { AssetEditButton } from "@/components/assets/asset-edit-button";
+import { AssetQRButton } from "@/components/assets/asset-qr-button";
 import { formatDate, formatCurrency, formatNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -88,7 +89,10 @@ export default async function AssetDetailPage({ params }: Props) {
               {asset.model && ` ${asset.model}`}
             </p>
           </div>
-          <AssetEditButton asset={asset} formData={formData} />
+          <div className="flex items-center gap-2">
+            <AssetQRButton assetCode={asset.code} assetName={asset.nameTh} assetId={asset.id} />
+            <AssetEditButton asset={asset} formData={formData} />
+          </div>
         </div>
 
         {/* Quick stat row */}

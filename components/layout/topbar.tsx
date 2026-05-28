@@ -3,7 +3,7 @@
 import { Bell, LogOut, ChevronDown } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageSwitcher } from "./language-switcher";
 import { useNotificationStore } from "@/store/notifications";
@@ -14,12 +14,19 @@ interface TopbarProps {
   userNameEn?: string;
   userRole?: string;
   userEmail?: string;
+  initialUnreadCount?: number;
 }
 
-export function Topbar({ userNameTh, userNameEn, userRole, userEmail }: TopbarProps) {
+export function Topbar({ userNameTh, userNameEn, userRole, userEmail, initialUnreadCount = 0 }: TopbarProps) {
   const t = useTranslations();
-  const unread = useNotificationStore((s) => s.unreadCount);
+  const { unreadCount, setUnreadCount } = useNotificationStore();
   const { collapsed } = useSidebar();
+
+  useEffect(() => {
+    setUnreadCount(initialUnreadCount);
+  }, [initialUnreadCount, setUnreadCount]);
+
+  const unread = unreadCount;
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -9,6 +10,11 @@ import { Toaster } from "sonner";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session) redirect("/login");
+
+  const userId = (session.user as { id?: string }).id;
+  const unreadCount = userId
+    ? await prisma.notification.count({ where: { userId, isRead: false } })
+    : 0;
 
   const user = session.user as {
     id?: string;
@@ -27,6 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         userNameEn={user.nameEn || user.name || undefined}
         userRole={user.role}
         userEmail={user.email || undefined}
+        initialUnreadCount={unreadCount}
       />
 
       <main

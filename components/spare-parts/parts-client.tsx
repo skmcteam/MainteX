@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, Package, AlertTriangle, ArrowUpDown } from "lucide-react";
+import { Search, Plus, Package, AlertTriangle, ArrowUpDown, Download } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SimpleFormModal } from "@/components/admin/simple-form-modal";
 import { createSparePart, updateSparePart, adjustStock } from "@/app/(app)/spare-parts/actions";
 import type { SparePartRow, PartsFormData } from "@/app/(app)/spare-parts/actions";
 import { formatCurrency, formatNumber } from "@/lib/utils";
+import { downloadCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Loader2 } from "lucide-react";
@@ -77,6 +78,12 @@ export function PartsClient({ data, formData }: Props) {
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหารหัส / ชื่อ..."
                 className="rounded-lg py-1.5 pl-7 pr-3 text-xs" style={{ background: "var(--panel-2)", border: "0.5px solid var(--line)", color: "var(--text)", outline: "none", width: "180px" }} />
             </div>
+            <button
+              onClick={() => downloadCSV(`spare-parts-${new Date().toISOString().slice(0,10)}.csv`, filtered.map((r) => ({ รหัส: r.code, ชื่อ: r.nameTh, "Part No": r.partNumber ?? "", หน่วย: r.unit?.code ?? "", คงเหลือ: r.stockOnHand, จุดสั่งซื้อ: r.reorderPoint, ราคา: r.unitCost ?? "", ที่เก็บ: r.shelfLocation ?? "" })))}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium"
+              style={{ background: "var(--panel-2)", color: "var(--text-sub)", border: "0.5px solid var(--line)" }}>
+              <Download size={13} /> CSV
+            </button>
             <button onClick={() => setCreateOpen(true)}
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white active:scale-95"
               style={{ background: "var(--brand)" }}>

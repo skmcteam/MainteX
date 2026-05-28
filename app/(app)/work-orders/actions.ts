@@ -245,3 +245,79 @@ export async function updateChecklistItem(id: string, status: "PENDING" | "PASS"
   });
   return { success: true };
 }
+
+export async function getAvailableParts() {
+  const parts = await prisma.sparePart.findMany({
+    where: { isDeleted: false },
+    select: { id: true, code: true, nameTh: true, stockOnHand: true, unitCost: true, unit: { select: { code: true } } },
+    orderBy: { code: "asc" },
+    take: 500,
+  });
+  return parts.map((p) => ({
+    id: p.id,
+    code: p.code,
+    nameTh: p.nameTh,
+    stockOnHand: Number(p.stockOnHand),
+    unitCost: p.unitCost ? Number(p.unitCost) : null,
+    unit: p.unit,
+  }));
+}
+
+const WOPartSchema = z.object({
+  workOrderId: z.string().min(1),
+  sparePartId: z.string().min(1),
+  quantity: z.coerce.number().positive("จำนวนต้องมากกว่า 0"),
+});
+
+export async function addPartToWO(input: z.infer<typeof WOPartSchema>) {
+  const data = WOPartSchema.parse(input);
+  const part = await prisma.sparePart.findUnique({ where: { id: data.sparePartId }, select: { stockOnHand: true, unitCost: true } });
+  if (!part) throw new Error("ไม่พบอะไหล่");
+  if (Number(part.stockOnHand) < data.quantity) throw new Error(`สต็อกไม่เพียงพอ (มี ${Number(part.stockOnHand)})`);
+
+  await prisma.$transaction([
+    prisma.wOSparePart.create({
+      data: {
+        workOrderId: data.workOrderId,
+        sparePartId: data.sparePartId,
+        quantity: data.quantity,
+        unitCost: part.unitCost,
+      },
+    }),
+    prisma.sparePart.update({
+      where: { id: data.sparePartId },
+      data: { stockOnHand: { decrement: data.quantity } },
+    }),
+  ]);
+
+  // Recalculate totalPartsCost
+  const partsTotal = await prisma.wOSparePart.aggregate({
+    where: { workOrderId: data.workOrderId },
+    _sum: { quantity: true },
+  });
+  const allParts = await prisma.wOSparePart.findMany({ where: { workOrderId: data.workOrderId }, select: { quantity: true, unitCost: true } });
+  const totalPartsCost = allParts.reduce((s, p) => s + Number(p.quantity) * Number(p.unitCost ?? 0), 0);
+  await prisma.workOrder.update({ where: { id: data.workOrderId }, data: { totalPartsCost } });
+
+  revalidatePath(`/work-orders/${data.workOrderId}`);
+  revalidatePath("/spare-parts");
+  return { success: true };
+}
+
+export async function removePartFromWO(woPartId: string) {
+  const woPart = await prisma.wOSparePart.findUnique({ where: { id: woPartId }, select: { workOrderId: true, sparePartId: true, quantity: true } });
+  if (!woPart) throw new Error("ไม่พบรายการ");
+
+  await prisma.$transaction([
+    prisma.wOSparePart.delete({ where: { id: woPartId } }),
+    prisma.sparePart.update({ where: { id: woPart.sparePartId }, data: { stockOnHand: { increment: Number(woPart.quantity) } } }),
+  ]);
+
+  const allParts = await prisma.wOSparePart.findMany({ where: { workOrderId: woPart.workOrderId }, select: { quantity: true, unitCost: true } });
+  const totalPartsCost = allParts.reduce((s, p) => s + Number(p.quantity) * Number(p.unitCost ?? 0), 0);
+  await prisma.workOrder.update({ where: { id: woPart.workOrderId }, data: { totalPartsCost } });
+
+  revalidatePath(`/work-orders/${woPart.workOrderId}`);
+  revalidatePath("/spare-parts");
+  return { success: true };
+}

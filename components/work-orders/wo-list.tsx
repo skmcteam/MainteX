@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardList, Search, Plus, ChevronRight } from "lucide-react";
+import { ClipboardList, Search, Plus, ChevronRight, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/csv";
 import { EmptyState } from "@/components/shared/empty-state";
 import { WOStatusPill, PriorityPill } from "@/components/shared/status-pill";
 import { WOFormModal } from "./wo-form-modal";
@@ -109,6 +110,13 @@ export function WorkOrderList({ data, formData }: Props) {
                 }}
               />
             </div>
+            <button
+              onClick={() => downloadCSV(`work-orders-${new Date().toISOString().slice(0,10)}.csv`, filtered.map((r) => ({ "WO#": r.woNumber, หัวข้อ: r.title, อุปกรณ์: r.asset.code, สถานะ: r.status, ลำดับความสำคัญ: r.priority.code, ประเภท: r.type.code, ผู้รับผิดชอบ: r.assignee?.nameTh ?? "", วันที่: r.createdAt })))}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium"
+              style={{ background: "var(--panel-2)", color: "var(--text-sub)", border: "0.5px solid var(--line)" }}
+            >
+              <Download size={13} /> CSV
+            </button>
             <button
               onClick={() => setModalOpen(true)}
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-all active:scale-95"
