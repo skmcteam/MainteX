@@ -106,17 +106,11 @@ export async function togglePMPlan(id: string, isActive: boolean) {
   return { success: true };
 }
 
-// Generate WOs for PM plans that are due (nextDueDate <= today + leadTimeDays)
-export async function generatePMWorkOrders(): Promise<{ created: number; skipped: number }> {
-  const session = await requireRole(["SYSTEM_ADMIN", "MAINTENANCE_SUPERVISOR"]);
-  const now = new Date();
+// ─── PM generation helpers ────────────────────────────────────
 
-  const duePlans = await prisma.pMPlan.findMany({
-    where: {
-      isActive: true,
-      isDeleted: false,
-      nextDueDate: { not: null },
-    },
+async function findDuePlans(now: Date) {
+  const plans = await prisma.pMPlan.findMany({
+    where: { isActive: true, isDeleted: false, nextDueDate: { not: null } },
     include: {
       asset: { select: { id: true, code: true, nameTh: true, departmentId: true } },
       frequency: { select: { intervalDays: true } },
@@ -124,40 +118,84 @@ export async function generatePMWorkOrders(): Promise<{ created: number; skipped
     },
   });
 
-  const [pmType, medPriority, , adminUser] = await Promise.all([
+  // Filter by lead time in-memory (avoids a computed-column query)
+  return plans.filter((p) => {
+    if (!p.nextDueDate) return false;
+    const trigger = new Date(p.nextDueDate.getTime() - p.leadTimeDays * 24 * 60 * 60 * 1000);
+    return now >= trigger;
+  });
+}
+
+// Atomically reserves `count` WO numbers in one DB round-trip.
+// Returns the first index (0-based) to pass to generateWONumber.
+async function buildWONumbers(count: number): Promise<{ firstIndex: number; pattern: string }> {
+  const [series] = await prisma.$queryRaw<{ lastNumber: number; pattern: string }[]>`
+    UPDATE "WONumberSeries"
+    SET "lastNumber" = "lastNumber" + ${count}, "updatedAt" = NOW()
+    WHERE id = (SELECT id FROM "WONumberSeries" LIMIT 1)
+    RETURNING "lastNumber", pattern
+  `;
+  // lastNumber is now the post-increment value; the batch starts at lastNumber - count
+  return { firstIndex: series.lastNumber - count, pattern: series.pattern };
+}
+
+async function copyChecklistItems(
+  workOrderId: string,
+  items: { id: string; descriptionTh: string; descriptionEn: string | null }[],
+) {
+  if (!items.length) return;
+  await prisma.wOChecklistItem.createMany({
+    data: items.map((item) => ({
+      workOrderId,
+      checklistItemId: item.id,
+      descriptionTh: item.descriptionTh,
+      descriptionEn: item.descriptionEn ?? "",
+      status: "PENDING",
+    })),
+  });
+}
+
+// Generate WOs for PM plans that are due (nextDueDate <= today + leadTimeDays)
+export async function generatePMWorkOrders(): Promise<{ created: number; skipped: number }> {
+  const session = await requireRole(["SYSTEM_ADMIN", "MAINTENANCE_SUPERVISOR"]);
+  const now = new Date();
+
+  const [candidates, pmType, medPriority, adminUser] = await Promise.all([
+    findDuePlans(now),
     prisma.wOType.findFirst({ where: { code: "PM" } }),
     prisma.priority.findFirst({ where: { code: "MEDIUM" } }),
-    prisma.wONumberSeries.findFirst(),
     prisma.user.findFirst({ where: { role: { code: "SYSTEM_ADMIN" } } }),
   ]);
 
   if (!pmType || !medPriority || !adminUser) throw new Error("ข้อมูลพื้นฐานไม่ครบ");
-
-  // Use session user as creator if available, fallback to admin
   const creatorId = session.user.id ?? adminUser.id;
 
+  // Batch lookup: one query instead of N findFirst calls
+  const activeWOs = await prisma.workOrder.findMany({
+    where: {
+      pmPlanId: { in: candidates.map((p) => p.id) },
+      status: { in: ["OPEN", "IN_PROGRESS", "ON_HOLD"] },
+      isDeleted: false,
+    },
+    select: { pmPlanId: true },
+  });
+  const blockedPlanIds = new Set(activeWOs.map((w) => w.pmPlanId!));
+
+  const plansToCreate = candidates.filter((p) => !blockedPlanIds.has(p.id));
+  const skipped = candidates.length - plansToCreate.length;
+
+  if (plansToCreate.length === 0) return { created: 0, skipped };
+
+  // Reserve all WO numbers in one atomic UPDATE
+  const { generateWONumber } = await import("@/lib/utils");
+  const { firstIndex, pattern } = await buildWONumbers(plansToCreate.length);
+
   let created = 0;
-  let skipped = 0;
 
-  for (const plan of duePlans) {
-    if (!plan.nextDueDate) { skipped++; continue; }
-    const dueDate = new Date(plan.nextDueDate);
-    const triggerDate = new Date(dueDate.getTime() - plan.leadTimeDays * 24 * 60 * 60 * 1000);
-    if (now < triggerDate) { skipped++; continue; }
-
-    const existing = await prisma.workOrder.findFirst({
-      where: { pmPlanId: plan.id, status: { in: ["OPEN", "IN_PROGRESS", "ON_HOLD"] } },
-    });
-    if (existing) { skipped++; continue; }
-
-    const updated = await prisma.$queryRaw<{ lastNumber: number; pattern: string }[]>`
-      UPDATE "WONumberSeries"
-      SET "lastNumber" = "lastNumber" + 1, "updatedAt" = NOW()
-      WHERE id = (SELECT id FROM "WONumberSeries" LIMIT 1)
-      RETURNING "lastNumber", pattern
-    `;
-    const { generateWONumber } = await import("@/lib/utils");
-    const woNumber = generateWONumber(updated[0].pattern, updated[0].lastNumber - 1);
+  for (let i = 0; i < plansToCreate.length; i++) {
+    const plan = plansToCreate[i];
+    const dueDate = new Date(plan.nextDueDate!);
+    const woNumber = generateWONumber(pattern, firstIndex + i);
 
     const wo = await prisma.workOrder.create({
       data: {
@@ -175,33 +213,25 @@ export async function generatePMWorkOrders(): Promise<{ created: number; skipped
       },
     });
 
-    await writeAuditLog({
-      userId: creatorId,
-      entity: "WorkOrder",
-      entityId: wo.id,
-      action: "CREATE",
-      after: { woNumber, pmPlanId: plan.id, source: "generatePMWorkOrders" },
-    });
-
-    if (plan.checklistTemplate?.items.length) {
-      await prisma.wOChecklistItem.createMany({
-        data: plan.checklistTemplate.items.map((item) => ({
-          workOrderId: wo.id,
-          checklistItemId: item.id,
-          descriptionTh: item.descriptionTh,
-          descriptionEn: item.descriptionEn,
-          status: "PENDING",
-        })),
-      });
-    }
-
-    if (plan.frequency?.intervalDays) {
-      const newNextDue = new Date(dueDate.getTime() + plan.frequency.intervalDays * 24 * 60 * 60 * 1000);
-      await prisma.pMPlan.update({
-        where: { id: plan.id },
-        data: { lastDoneDate: now, nextDueDate: newNextDue },
-      });
-    }
+    await Promise.all([
+      writeAuditLog({
+        userId: creatorId,
+        entity: "WorkOrder",
+        entityId: wo.id,
+        action: "CREATE",
+        after: { woNumber, pmPlanId: plan.id, source: "generatePMWorkOrders" },
+      }),
+      copyChecklistItems(wo.id, plan.checklistTemplate?.items ?? []),
+      plan.frequency?.intervalDays
+        ? prisma.pMPlan.update({
+            where: { id: plan.id },
+            data: {
+              lastDoneDate: now,
+              nextDueDate: new Date(dueDate.getTime() + plan.frequency.intervalDays * 24 * 60 * 60 * 1000),
+            },
+          })
+        : Promise.resolve(),
+    ]);
 
     created++;
   }
