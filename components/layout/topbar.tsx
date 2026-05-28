@@ -4,6 +4,7 @@ import { Bell, LogOut, ChevronDown } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageSwitcher } from "./language-switcher";
 import { useNotificationStore } from "@/store/notifications";
@@ -47,7 +48,8 @@ export function Topbar({ userNameTh, userNameEn, userRole, userEmail, initialUnr
         <ThemeToggle />
 
         {/* Notifications */}
-        <button
+        <Link
+          href="/notifications"
           className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-all hover:bg-panel-2"
           aria-label={t("notifications.title")}
         >
@@ -60,7 +62,7 @@ export function Topbar({ userNameTh, userNameEn, userRole, userEmail, initialUnr
               {unread > 9 ? "9+" : unread}
             </span>
           )}
-        </button>
+        </Link>
 
         {/* Divider */}
         <div className="mx-1 h-5 w-px" style={{ background: "var(--line)" }} />

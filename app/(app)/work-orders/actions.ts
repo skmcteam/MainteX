@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { WOStatus } from "@prisma/client";
 import { generateWONumber } from "@/lib/utils";
+import { createNotificationEvent } from "@/lib/notifications";
 
 // ─── Read ─────────────────────────────────────────────────────
 
@@ -190,14 +191,28 @@ export async function createWorkOrder(input: z.infer<typeof WOCreateSchema>) {
       typeId: data.typeId,
       priorityId: data.priorityId,
       assetId: data.assetId,
-      departmentId: data.departmentId ?? asset?.departmentId,
-      assigneeId: data.assigneeId,
+      departmentId: data.departmentId || asset?.departmentId,
+      assigneeId: data.assigneeId || null,
       creatorId: session.user.id,
       status: "OPEN",
     },
   });
 
   revalidatePath("/work-orders");
+
+  const priority = await prisma.priority.findUnique({ where: { id: data.priorityId }, select: { code: true } });
+  if (priority?.code === "URGENT") {
+    await createNotificationEvent({
+      event: "urgent_WO_created",
+      type: "URGENT_WO",
+      titleTh: `ใบสั่งงานเร่งด่วน: ${data.title}`,
+      titleEn: `Urgent WO: ${data.title}`,
+      bodyTh: `${woNumber} ถูกสร้างแล้ว`,
+      bodyEn: `${woNumber} has been created`,
+      link: `/work-orders/${wo.id}`,
+    });
+  }
+
   return { success: true, id: wo.id };
 }
 
@@ -289,6 +304,22 @@ export async function addPartToWO(input: z.infer<typeof WOPartSchema>) {
       data: { stockOnHand: { decrement: data.quantity } },
     }),
   ]);
+
+  const afterPart = await prisma.sparePart.findUnique({
+    where: { id: data.sparePartId },
+    select: { code: true, nameTh: true, stockOnHand: true, reorderPoint: true },
+  });
+  if (afterPart && Number(afterPart.stockOnHand) <= Number(afterPart.reorderPoint)) {
+    await createNotificationEvent({
+      event: "parts_low_stock",
+      type: "PARTS_LOW",
+      titleTh: `สต็อกอะไหล่ต่ำ: ${afterPart.nameTh}`,
+      titleEn: `Low stock: ${afterPart.nameTh}`,
+      bodyTh: `${afterPart.code} เหลือ ${Number(afterPart.stockOnHand)} หน่วย`,
+      bodyEn: `${afterPart.code} has ${Number(afterPart.stockOnHand)} units remaining`,
+      link: "/spare-parts",
+    });
+  }
 
   // Recalculate totalPartsCost
   const partsTotal = await prisma.wOSparePart.aggregate({

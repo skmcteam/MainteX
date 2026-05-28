@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { createNotificationEvent } from "@/lib/notifications";
 
 // ─── Read ─────────────────────────────────────────────────────
 
@@ -192,5 +193,16 @@ export async function generatePMWorkOrders(): Promise<{ created: number; skipped
 
   revalidatePath("/pm-schedule");
   revalidatePath("/work-orders");
+
+  if (created > 0) {
+    await createNotificationEvent({
+      event: "PM_due_soon",
+      type: "PM_DUE",
+      titleTh: `สร้างใบสั่งงาน PM จำนวน ${created} ใบ`,
+      titleEn: `${created} PM work order${created > 1 ? "s" : ""} generated`,
+      link: "/work-orders",
+    });
+  }
+
   return { created, skipped };
 }

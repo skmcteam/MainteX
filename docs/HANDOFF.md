@@ -1,113 +1,138 @@
 # Handoff State — SKMC CMMS
 
-> Current as of commit `afbbb7e` (2026-05-28). Describes exactly what exists, what works, and what doesn't.
+> Current as of commit `0238a5d` (2026-05-28). All four phases complete.
 
 ## Git History
 
 ```
+0238a5d  fix(reports): raw SQL BigInt serialization + alias ORDER BY
+55f66b4  feat(phase4): reports, QR, CSV export, WO parts, notification count
+5cfdeaa  feat(phase3): admin CRUD, spare parts, PM→WO, bug fixes
+c981c38  docs: add AI_CONTEXT, ARCHITECTURE, DECISIONS, HANDOFF, TODO
 afbbb7e  feat(phase2): core modules — Asset Registry, Work Orders, PM Schedule, Calibration
 1391e8a  feat(phase1): foundation — Next.js 15 + Tailwind 4 + Prisma + Auth + Layout shell
 ```
 
 ---
 
-## Completed & Working
+## Full Feature Status
 
-### Phase 1 — Foundation (`1391e8a`)
-
-- Next.js 15 App Router project with route groups `(app)` / `(auth)`
-- Tailwind CSS v4 with full CSS custom properties design system (light + dark mode)
-- Prisma schema: 30+ models covering Assets, WorkOrders, PMPlans, Calibrations, SpareParts, Notifications, Workflows, AuditLog
-- NextAuth v5 JWT auth: Credentials provider, bcrypt, edge-safe middleware split
-- next-intl i18n: Thai default, English via cookie (no URL routing)
-- Collapsible sidebar + responsive topbar + mobile bottom nav (5 items)
-- Dashboard with live KPIs: open WOs, active assets, cal overdue, PM compliance, MTBF, MTTR, availability, downtime hours
-- Asset status pie chart (Recharts)
-- Zustand stores: sidebar collapse (persisted), notifications (placeholder)
-- Database seed: all reference data + 10 machines, 5 molds, 5 IT assets, 10 instruments, 3 sample WOs, 8 spare parts
-
-### Phase 2 — Core Modules (`afbbb7e`)
-
-#### Asset Registry
+### Asset Registry
 
 | Feature | Status | Notes |
 |---|---|---|
-| `/assets/machines` list | ✅ Live | 10 rows, status tabs, search, create modal |
-| `/assets/molds` list | ✅ Live | Shot count column |
-| `/assets/it` list | ✅ Live | Standard columns |
-| `/assets/instruments` list | ✅ Live | Cal status + next date columns |
-| `/assets/[id]` detail | ✅ Live | Info + related WOs/PMs/cals/spare parts |
-| Create asset modal | ✅ Live | Category-specific fields, dept→section cascade |
-| Edit asset | ❌ Missing | `updateAsset()` action exists, UI does not |
+| `/assets/machines` list | ✅ | Status tabs, search, create modal |
+| `/assets/molds` list | ✅ | Shot count / mold life column |
+| `/assets/it` list | ✅ | IP, OS columns |
+| `/assets/instruments` list | ✅ | Cal status + next date |
+| `/assets/[id]` detail | ✅ | Info, machine specs, WOs, PMs, cals, spare parts BOM |
+| Edit asset button | ✅ | Pre-filled modal on detail page |
+| QR code popup + print | ✅ | Opens `qrcode.react` dialog, prints to new tab with label |
+| Create asset | ✅ | Category-specific fields, dept→section cascade |
+| Delete asset | ❌ | Soft-delete field exists in schema, no UI |
+| QR scan (camera) | ❌ | `html5-qrcode` installed, scan UI not built |
 
-#### Work Orders
-
-| Feature | Status | Notes |
-|---|---|---|
-| `/work-orders` list | ✅ Live | Status tabs, priority/type badges, search |
-| `/work-orders/[id]` detail | ✅ Live | Full metadata, status actions, cost sidebar |
-| Create WO modal | ✅ Live | Asset search, type/priority/assignee |
-| WO number generation | ✅ Live | `WO-{YY}{MM}-{####}` from WONumberSeries |
-| Status transitions | ✅ Live | OPEN→IN_PROGRESS→DONE/ON_HOLD, CANCELLED |
-| Checklist items | ✅ Live | PENDING→PASS→FAIL→NA with optimistic UI |
-| Close WO with cost/codes | ❌ Missing | Direct status change, no completion dialog |
-| Approval workflow | ❌ Missing | Models exist, engine not implemented |
-| Add parts to WO | ❌ Missing | WOSparePart model exists, UI does not |
-| File attachments | ❌ Missing | Model + storage not configured |
-
-#### PM Schedule
+### Work Orders
 
 | Feature | Status | Notes |
 |---|---|---|
-| `/pm-schedule` list | ✅ Live | Overdue/due-soon tabs, days countdown |
-| Create PM plan modal | ✅ Live | Asset search, frequency, template, assignee |
-| Auto-generate WOs from PM | ❌ Missing | Core PM logic not implemented |
-| PM calendar view | ❌ Missing | Mentioned in nav but not planned for Phase 3 |
+| `/work-orders` list | ✅ | Status tabs, search, CSV export |
+| `/work-orders/[id]` detail | ✅ | Full metadata, cost sidebar, failure codes |
+| Create WO modal | ✅ | Asset search, type/priority/assignee |
+| WO number (atomic) | ✅ | `UPDATE...RETURNING` — no race condition |
+| Status transitions | ✅ | OPEN→IN_PROGRESS→DONE/ON_HOLD, CANCELLED |
+| WO close dialog | ✅ | Captures laborHours, failure/cause/action codes |
+| Checklist items | ✅ | PENDING→PASS→FAIL→NA, optimistic UI |
+| Add/remove parts | ✅ | `WOPartsPanel`, deducts stock, recalculates cost |
+| Approval workflow | ❌ | `Workflow`/`WorkflowStep` models seeded; engine not built |
+| File attachments | ❌ | `WOAttachment` model exists; no storage wired |
+| Mold shot count on close | ❌ | No UI to increment `Asset.shotCount` |
 
-#### Calibration
+### PM Schedule
 
 | Feature | Status | Notes |
 |---|---|---|
-| `/calibration` list | ✅ Live | 10 instruments, cal status, "บันทึกผล" button |
-| Record calibration modal | ✅ Live | Auto-fills nextCalDate from period |
-| calStatus auto-update | ❌ Missing | Goes stale — must compute at query time |
+| `/pm-schedule` list | ✅ | Overdue/due-soon tabs, days countdown, 8 seeded plans |
+| Create PM plan | ✅ | Asset search, frequency, checklist template |
+| Generate WOs button | ✅ | `generatePMWorkOrders()` — copies checklist, advances nextDueDate |
+| PM calendar view | ❌ | Not planned |
+| Usage-based PM (shots) | ❌ | Schema supports it; trigger logic missing |
+
+### Calibration
+
+| Feature | Status | Notes |
+|---|---|---|
+| `/calibration` list | ✅ | 10 instruments, cal status computed live |
+| Record calibration | ✅ | Auto-fills next date from period, updates asset |
+| calStatus auto-update | ✅ | **Computed at query time** — no stale data |
+| Certificate file upload | ❌ | `certFileUrl` field exists; no storage |
+
+### Spare Parts
+
+| Feature | Status | Notes |
+|---|---|---|
+| `/spare-parts` list | ✅ | Low-stock tab, search, CSV export |
+| Create/edit part | ✅ | Unit, supplier, shelf, reorder point |
+| Stock adjust dialog | ✅ | +/- with preview, reason field |
+| WO parts deduction | ✅ | `addPartToWO` checks stock, updates `totalPartsCost` |
+| Stock movements log | ❌ | No audit trail for stock changes |
+| Purchase orders | ❌ | Not planned |
+
+### Reports
+
+| Feature | Status | Notes |
+|---|---|---|
+| `/reports` — KPI strip | ✅ | WO counts, MTBF, MTTR, availability |
+| WO by month chart | ✅ | 12-month stacked bar, CM vs PM vs others |
+| Top bad actors | ✅ | Horizontal bar + detail table with rank badges |
+| Cost by department | ✅ | Stacked bar, labor + parts, 12 months |
+| PM compliance trend | ✅ | Line chart with 80% target reference line |
+| Calibration status | ✅ | Donut pie with OVERDUE/DUE_SOON/NORMAL tiles |
+| Export PDF/Excel | ❌ | Only CSV on WO list + spare parts |
+| Custom date ranges | ❌ | Fixed 12-month window |
+
+### Admin Panel
+
+| Page | Status |
+|---|---|
+| `/admin` hub | ✅ — grid of links |
+| `/admin/users` | ✅ — full CRUD, bcrypt password, active toggle |
+| `/admin/roles` | ✅ — read-only list (system roles) |
+| `/admin/departments` | ✅ — tree with inline section CRUD |
+| `/admin/areas` | ✅ — full CRUD with delete |
+| `/admin/wo-types` | ✅ — CRUD with color picker |
+| `/admin/priorities` | ✅ — CRUD with SLA hours |
+| `/admin/asset-classes` | ✅ — CRUD, category/criticality |
+| `/admin/calibration-labs` | ✅ — CRUD |
+| `/admin/suppliers` | ✅ — CRUD with active toggle |
+| `/admin/notification-rules` | ✅ — list + toggle + add rule |
+| `/admin/workflow-designer` | ❌ — placeholder, not built |
+| `/admin/checklist-templates` | ❌ — placeholder, not built |
+
+### Other
+
+| Feature | Status | Notes |
+|---|---|---|
+| Notification bell count | ✅ | Real DB count seeded from layout server component |
+| CSV export | ✅ | WO list + spare parts, Thai header + BOM for Excel |
+| Dark mode | ✅ | All CSS vars — verified working throughout |
+| Thai / English locale | ✅ | Cookie-based switch, TH default |
+| Sidebar collapse | ✅ | Persisted to localStorage |
 
 ---
 
-## Placeholder Pages (Shell Only)
+## Remaining Gaps (True Production Blockers)
 
-These routes render empty Phase placeholders. All need Phase 3 implementation:
+These are the only items that would block real factory deployment:
 
-```
-/spare-parts
-/reports
-/admin                      (hub)
-/admin/users
-/admin/roles
-/admin/workflow-designer
-/admin/wo-types
-/admin/priorities
-/admin/asset-classes
-/admin/departments
-/admin/sections
-/admin/areas
-/admin/checklist-templates
-/admin/calibration-labs
-/admin/suppliers
-/admin/notification-rules
-```
-
----
-
-## Known Bugs
-
-| # | Bug | Severity | File |
-|---|---|---|---|
-| 1 | WO number series race condition (read-then-write) | Medium | `work-orders/actions.ts:createWorkOrder` |
-| 2 | `calStatus` stale after date passes | Medium | `calibration/actions.ts:getCalibrationAssets` |
-| 3 | PM plans in seed have no `nextDueDate` | Low | `prisma/seed.ts` |
-| 4 | No edit button on asset detail page | Low | `assets/[id]/page.tsx` |
-| 5 | WO completion has no cost/failure code capture UI | Low | `wo-status-actions.tsx` |
+| Gap | Why it blocks | Effort |
+|---|---|---|
+| File storage (attachments, cal certs) | WOs and calibrations need document attachments | Medium — wire S3 or local storage |
+| Approval workflow engine | WOs route around approval steps | Large — step-by-step state machine |
+| Notification delivery | Bell shows count, events don't create notifications | Medium — add `createNotification()` calls at mutation points |
+| Production env (DB, secrets, domain) | No `pnpm build` has been run | Small — env vars + `pnpm build` |
+| Checklist template builder | Admin can't create new templates | Medium — drag-sort item list |
+| Mold shot count tracking | PM trigger on shots never fires | Small-Medium |
 
 ---
 
@@ -123,12 +148,12 @@ NEXTAUTH_URL="http://localhost:3000"
 ## Dev Commands
 
 ```bash
-pnpm dev                               # Turbopack dev server
+pnpm dev                               # Turbopack dev server (:3000 or :3001)
 pnpm type-check                        # tsc --noEmit
 pnpm db:migrate                        # prisma migrate dev
 node_modules/.bin/tsx prisma/seed.ts   # seed (use this, not pnpm db:seed)
 node_modules/.bin/prisma generate      # regenerate client after schema change
-node_modules/.bin/prisma studio        # GUI browser at localhost:5555
+node_modules/.bin/prisma studio        # GUI at localhost:5555
 ```
 
 ## Test Users (all password: `skmc1234`)
@@ -141,18 +166,16 @@ node_modules/.bin/prisma studio        # GUI browser at localhost:5555
 | tech1@skmc.co.th | DEPT_TECHNICIAN |
 | tech2@skmc.co.th | DEPT_TECHNICIAN |
 
----
+## Seed Data Summary
 
-## What to Do Next (Phase 3 Starting Point)
-
-The most impactful first tasks, in order:
-
-1. **Fix calStatus computation** — in `getCalibrationAssets()`, replace the stored `r.calStatus` with a computed value based on `r.nextCalDate` vs `new Date()`. Eliminates the stale-data bug without schema changes.
-
-2. **Add PM nextDueDate to seed** — update `prisma/seed.ts` to calculate `nextDueDate` for each PM plan so the schedule page shows real dates.
-
-3. **Admin: Users CRUD** — highest business value admin page. Pattern is identical to the asset create modal; use `bcrypt.hash` in the server action.
-
-4. **WO completion dialog** — small change to `wo-status-actions.tsx`: when clicking "เสร็จสิ้น", open a small Radix Dialog asking for laborHours, failureCode, causeCode, actionCode, notes before calling `updateWOStatus`.
-
-5. **Spare parts inventory** — needed for WO parts tracking. Build the list first, then add stock adjustment, then wire into WO detail.
+| Entity | Count |
+|---|---|
+| Machines | 10 (SK-P-001…SK-P-010) |
+| Molds | 5 (J-C-001…J-C-005) |
+| IT assets | 5 (PCD-AC-01, PCD-WS-01…03) |
+| Instruments | 10 (PG, LC, TC, VC, MC series) |
+| PM plans | 8 (with real nextDueDate) |
+| Work Orders | 3 sample (1 DONE, 1 OPEN, 1 IN_PROGRESS) |
+| Spare parts | 8 (hydraulic, bearing, grease, sensor, filter…) |
+| Users | 5 |
+| Calibration labs | 4 (SP-METRO, PCAL, KAWATA, GOSHU) |

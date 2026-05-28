@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { createNotificationEvent } from "@/lib/notifications";
 
 export async function getSpareParts() {
   const rows = await prisma.sparePart.findMany({
@@ -81,11 +82,27 @@ const AdjustSchema = z.object({
 
 export async function adjustStock(input: z.infer<typeof AdjustSchema>) {
   const data = AdjustSchema.parse(input);
-  const part = await prisma.sparePart.findUnique({ where: { id: data.sparePartId }, select: { stockOnHand: true } });
+  const part = await prisma.sparePart.findUnique({
+    where: { id: data.sparePartId },
+    select: { code: true, nameTh: true, stockOnHand: true, reorderPoint: true },
+  });
   if (!part) throw new Error("ไม่พบอะไหล่");
   const newStock = Number(part.stockOnHand) + data.delta;
   if (newStock < 0) throw new Error("สต็อกไม่เพียงพอ");
   await prisma.sparePart.update({ where: { id: data.sparePartId }, data: { stockOnHand: newStock } });
+
+  if (data.delta < 0 && newStock <= Number(part.reorderPoint)) {
+    await createNotificationEvent({
+      event: "parts_low_stock",
+      type: "PARTS_LOW",
+      titleTh: `สต็อกอะไหล่ต่ำ: ${part.nameTh}`,
+      titleEn: `Low stock: ${part.nameTh}`,
+      bodyTh: `${part.code} เหลือ ${newStock} หน่วย`,
+      bodyEn: `${part.code} has ${newStock} units remaining`,
+      link: "/spare-parts",
+    });
+  }
+
   revalidatePath("/spare-parts");
   return { success: true };
 }

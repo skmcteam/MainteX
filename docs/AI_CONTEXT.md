@@ -51,8 +51,9 @@ macOS peer auth — user is `pisitsak.kr`, NOT `postgres`.
 |---|---|---|
 | Phase 1 — Foundation | ✅ Done | `1391e8a` |
 | Phase 2 — Core Modules | ✅ Done | `afbbb7e` |
-| Phase 3 — Admin & Master Data | 🔲 Next | — |
-| Phase 4 — Polish & Handoff | 🔲 Future | — |
+| Phase 3 — Admin & Master Data | ✅ Done | `5cfdeaa` |
+| Phase 4 — Polish & Reports | ✅ Done | `0238a5d` |
+| Remaining gaps | 🔲 Optional | See HANDOFF.md |
 
 ## The Three Must-Know Gotchas
 
@@ -65,17 +66,24 @@ macOS peer auth — user is `pisitsak.kr`, NOT `postgres`.
 ## Key Files to Know
 
 ```
-app/(app)/layout.tsx          ← auth guard + Toaster + layout shell
-app/(app)/dashboard/          ← dashboard with KPIs (MTBF, MTTR, PM compliance)
-app/(app)/assets/actions.ts   ← all asset CRUD (getAssets, getAsset, createAsset…)
-app/(app)/work-orders/actions.ts ← WO CRUD + status transitions + WO number gen
-app/(app)/pm-schedule/actions.ts ← PM plan CRUD
-app/(app)/calibration/actions.ts ← calibration record + asset calStatus update
-app/globals.css               ← all CSS custom properties + .panel-border, .row-hover, .form-input
-lib/utils.ts                  ← formatDate, formatCurrency, generateWONumber, daysUntil
-lib/kpi.ts                    ← computeKPIs (MTBF/MTTR/availability)
-prisma/schema.prisma          ← source of truth for all models
-prisma/seed.ts                ← creates all reference data + sample assets/WOs
+app/(app)/layout.tsx              ← auth guard + Toaster + real notification count
+app/(app)/dashboard/              ← KPI dashboard (MTBF, MTTR, PM compliance, charts)
+app/(app)/assets/actions.ts       ← asset CRUD + getAssetFormData
+app/(app)/work-orders/actions.ts  ← WO CRUD, status transitions, atomic WO#, parts management
+app/(app)/pm-schedule/actions.ts  ← PM plan CRUD + generatePMWorkOrders()
+app/(app)/calibration/actions.ts  ← recordCalibration, calStatus computed live
+app/(app)/spare-parts/actions.ts  ← inventory CRUD, adjustStock, addPartToWO/removePartFromWO
+app/(app)/admin/actions.ts        ← all master data CRUD (users, depts, types, labs, suppliers…)
+app/(app)/reports/actions.ts      ← analytics: getWOByMonth, getTopBadActors, getCostByDepartment…
+app/globals.css                   ← CSS custom properties + .panel-border, .row-hover, .form-input
+lib/utils.ts                      ← formatDate, formatCurrency, generateWONumber, daysUntil
+lib/csv.ts                        ← downloadCSV() — client-side CSV with Thai BOM
+lib/kpi.ts                        ← computeKPIs (MTBF/MTTR/availability)
+components/admin/admin-table.tsx  ← shared admin table (search, CRUD actions)
+components/admin/admin-crud-client.tsx ← generic modal wiring for all admin pages
+components/admin/simple-form-modal.tsx ← field-config driven modal
+prisma/schema.prisma              ← source of truth for all models
+prisma/seed.ts                    ← all reference data + sample assets/WOs/PM plans
 ```
 
 ## Pattern Summary (follow exactly)
