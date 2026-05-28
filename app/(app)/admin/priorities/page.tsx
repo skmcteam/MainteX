@@ -1,20 +1,29 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { getPrioritiesAdmin, createPriority, updatePriority } from "@/app/(app)/admin/actions";
 import { AdminCrudClient } from "@/components/admin/admin-crud-client";
-import { StatusPill } from "@/components/shared/status-pill";
 
-export const dynamic = "force-dynamic";
+type Row = Awaited<ReturnType<typeof getPrioritiesAdmin>>[number];
 
-export default async function PrioritiesPage() {
-  const priorities = await getPrioritiesAdmin();
+export default function PrioritiesPage() {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reload = async () => { setRows(await getPrioritiesAdmin()); };
+
+  useEffect(() => { getPrioritiesAdmin().then(d => { setRows(d); setLoading(false); }); }, []);
+
+  if (loading) return <div className="py-8 text-center text-xs" style={{ color: "var(--text-sub)" }}>กำลังโหลด...</div>;
+
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>ระดับความสำคัญ</h1>
-        <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>URGENT, HIGH, MEDIUM, LOW พร้อม SLA hours · {priorities.length} ระดับ</p>
+        <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>URGENT, HIGH, MEDIUM, LOW พร้อม SLA hours · {rows.length} ระดับ</p>
       </div>
       <AdminCrudClient
         title="ระดับความสำคัญ"
-        data={priorities}
+        data={rows}
         searchKeys={["code", "nameTh"]}
         createLabel="เพิ่มระดับ"
         columns={[
@@ -32,9 +41,9 @@ export default async function PrioritiesPage() {
           { key: "slaHours", label: "SLA (ชั่วโมง) *", type: "number", required: true, placeholder: "2" },
           { key: "sortOrder", label: "ลำดับ", type: "number", placeholder: "1" },
         ]}
-        toFormValues={(r) => ({ code: r.code, nameTh: r.nameTh, nameEn: r.nameEn, color: r.color, slaHours: r.slaHours, sortOrder: r.sortOrder })}
-        onCreate={(v) => createPriority({ code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), color: String(v.color), slaHours: Number(v.slaHours), sortOrder: Number(v.sortOrder || 0) })}
-        onUpdate={(id, v) => updatePriority(id, { code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), color: String(v.color), slaHours: Number(v.slaHours), sortOrder: Number(v.sortOrder || 0) })}
+        onCreate={async (v) => { await createPriority({ code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), color: String(v.color), slaHours: Number(v.slaHours), sortOrder: Number(v.sortOrder || 0) }); }}
+        onUpdate={async (id, v) => { await updatePriority(id, { code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), color: String(v.color), slaHours: Number(v.slaHours), sortOrder: Number(v.sortOrder || 0) }); }}
+        onDataChanged={reload}
       />
     </div>
   );

@@ -14,16 +14,16 @@ interface Props<T extends { id: string }> {
   searchKeys: (keyof T)[];
   createLabel?: string;
   fields: FieldDef[];
-  toFormValues: (row: T) => Record<string, unknown>;
   onCreate: (values: Record<string, string | boolean | number | null>) => Promise<unknown>;
   onUpdate: (id: string, values: Record<string, string | boolean | number | null>) => Promise<unknown>;
   onDelete?: (row: T) => Promise<unknown>;
   extraActions?: (row: T) => React.ReactNode;
+  onDataChanged?: () => void | Promise<void>;
 }
 
 export function AdminCrudClient<T extends { id: string }>({
   title, subtitle, data, columns, searchKeys, createLabel = "สร้างใหม่",
-  fields, toFormValues, onCreate, onUpdate, onDelete, extraActions,
+  fields, onCreate, onUpdate, onDelete, extraActions, onDataChanged,
 }: Props<T>) {
   const router = useRouter();
   const [modal, setModal] = useState<{ open: boolean; edit?: T }>({ open: false });
@@ -37,7 +37,8 @@ export function AdminCrudClient<T extends { id: string }>({
       toast.success("สร้างสำเร็จ");
     }
     setModal({ open: false });
-    router.refresh();
+    if (onDataChanged) await onDataChanged();
+    else router.refresh();
   };
 
   const handleDelete = async (row: T) => {
@@ -46,7 +47,8 @@ export function AdminCrudClient<T extends { id: string }>({
     try {
       await onDelete(row);
       toast.success("ลบสำเร็จ");
-      router.refresh();
+      if (onDataChanged) await onDataChanged();
+      else router.refresh();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "ไม่สามารถลบได้");
     }
@@ -70,7 +72,7 @@ export function AdminCrudClient<T extends { id: string }>({
         onClose={() => setModal({ open: false })}
         title={modal.edit ? `แก้ไข${createLabel?.replace("สร้าง", "").replace("เพิ่ม", "")}` : createLabel ?? ""}
         fields={fields}
-        defaultValues={modal.edit ? toFormValues(modal.edit) : undefined}
+        defaultValues={modal.edit ? Object.fromEntries(fields.map(f => [f.key, (modal.edit as Record<string, unknown>)[f.key]])) : undefined}
         onSave={handleSave}
       />
     </>

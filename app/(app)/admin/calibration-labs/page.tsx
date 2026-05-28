@@ -1,19 +1,29 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { getCalibrationLabsAdmin, createCalibrationLab, updateCalibrationLab } from "@/app/(app)/admin/actions";
 import { AdminCrudClient } from "@/components/admin/admin-crud-client";
 
-export const dynamic = "force-dynamic";
+type Row = Awaited<ReturnType<typeof getCalibrationLabsAdmin>>[number];
 
-export default async function CalibrationLabsPage() {
-  const labs = await getCalibrationLabsAdmin();
+export default function CalibrationLabsPage() {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reload = async () => { setRows(await getCalibrationLabsAdmin()); };
+
+  useEffect(() => { getCalibrationLabsAdmin().then(d => { setRows(d); setLoading(false); }); }, []);
+
+  if (loading) return <div className="py-8 text-center text-xs" style={{ color: "var(--text-sub)" }}>กำลังโหลด...</div>;
+
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>ห้องปฏิบัติการสอบเทียบ</h1>
-        <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>SP Metrology, PCaL, Kawata ฯลฯ · {labs.length} แห่ง</p>
+        <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>SP Metrology, PCaL, Kawata ฯลฯ · {rows.length} แห่ง</p>
       </div>
       <AdminCrudClient
         title="ห้องปฏิบัติการ"
-        data={labs}
+        data={rows}
         searchKeys={["code", "nameTh", "accreditNo"]}
         createLabel="เพิ่ม Lab"
         columns={[
@@ -31,9 +41,9 @@ export default async function CalibrationLabsPage() {
           { key: "phone", label: "เบอร์โทร", placeholder: "02-xxx-xxxx" },
           { key: "email", label: "อีเมล", type: "email", placeholder: "contact@lab.co.th" },
         ]}
-        toFormValues={(r) => ({ code: r.code, nameTh: r.nameTh, nameEn: r.nameEn, accreditNo: r.accreditNo ?? "", contact: r.contact ?? "", phone: r.phone ?? "", email: r.email ?? "" })}
-        onCreate={(v) => createCalibrationLab({ code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), accreditNo: String(v.accreditNo || ""), contact: String(v.contact || ""), phone: String(v.phone || ""), email: String(v.email || "") })}
-        onUpdate={(id, v) => updateCalibrationLab(id, { code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), accreditNo: String(v.accreditNo || ""), contact: String(v.contact || ""), phone: String(v.phone || ""), email: String(v.email || "") })}
+        onCreate={async (v) => { await createCalibrationLab({ code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), accreditNo: String(v.accreditNo || ""), contact: String(v.contact || ""), phone: String(v.phone || ""), email: String(v.email || "") }); }}
+        onUpdate={async (id, v) => { await updateCalibrationLab(id, { code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), accreditNo: String(v.accreditNo || ""), contact: String(v.contact || ""), phone: String(v.phone || ""), email: String(v.email || "") }); }}
+        onDataChanged={reload}
       />
     </div>
   );

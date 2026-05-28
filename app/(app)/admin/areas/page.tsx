@@ -1,10 +1,20 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { getAreas, createArea, updateArea, deleteArea } from "@/app/(app)/admin/actions";
 import { AdminCrudClient } from "@/components/admin/admin-crud-client";
 
-export const dynamic = "force-dynamic";
+type AreaRow = Awaited<ReturnType<typeof getAreas>>[number];
 
-export default async function AreasPage() {
-  const areas = await getAreas();
+export default function AreasPage() {
+  const [areas, setAreas] = useState<AreaRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reload = async () => { setAreas(await getAreas()); };
+
+  useEffect(() => { getAreas().then(a => { setAreas(a); setLoading(false); }); }, []);
+
+  if (loading) return <div className="py-8 text-center text-xs" style={{ color: "var(--text-sub)" }}>กำลังโหลด...</div>;
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -27,10 +37,10 @@ export default async function AreasPage() {
           { key: "nameTh", label: "ชื่อภาษาไทย *", required: true, placeholder: "สายการผลิต A" },
           { key: "nameEn", label: "ชื่อภาษาอังกฤษ *", required: true, placeholder: "Molding Line A" },
         ]}
-        toFormValues={(r) => ({ code: r.code, nameTh: r.nameTh, nameEn: r.nameEn })}
-        onCreate={(v) => createArea({ code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn) })}
-        onUpdate={(id, v) => updateArea(id, { code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn) })}
-        onDelete={(r) => deleteArea(r.id)}
+        onCreate={async (v) => { await createArea({ code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn) }); }}
+        onUpdate={async (id, v) => { await updateArea(id, { code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn) }); }}
+        onDelete={async (r) => { await deleteArea(r.id); }}
+        onDataChanged={reload}
       />
     </div>
   );

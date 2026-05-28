@@ -1,20 +1,30 @@
-import { getSuppliersAdmin, createSupplier, updateSupplier, toggleSupplier } from "@/app/(app)/admin/actions";
+"use client";
+
+import { useState, useEffect } from "react";
+import { getSuppliersAdmin, createSupplier, updateSupplier } from "@/app/(app)/admin/actions";
 import { AdminCrudClient } from "@/components/admin/admin-crud-client";
 import { StatusPill } from "@/components/shared/status-pill";
 
-export const dynamic = "force-dynamic";
+type Row = Awaited<ReturnType<typeof getSuppliersAdmin>>[number];
 
-export default async function SuppliersPage() {
-  const suppliers = await getSuppliersAdmin();
+export default function SuppliersPage() {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reload = async () => { setRows(await getSuppliersAdmin()); };
+
+  useEffect(() => { getSuppliersAdmin().then(d => { setRows(d); setLoading(false); }); }, []);
+
+  if (loading) return <div className="py-8 text-center text-xs" style={{ color: "var(--text-sub)" }}>กำลังโหลด...</div>;
+
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>ผู้จำหน่าย (Suppliers)</h1>
-        <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>ซัพพลายเออร์อะไหล่และวัสดุสิ้นเปลือง · {suppliers.length} ราย</p>
+        <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>ซัพพลายเออร์อะไหล่และวัสดุสิ้นเปลือง · {rows.length} ราย</p>
       </div>
       <AdminCrudClient
         title="ผู้จำหน่าย"
-        data={suppliers}
+        data={rows}
         searchKeys={["code", "nameTh", "contact"]}
         createLabel="เพิ่มผู้จำหน่าย"
         columns={[
@@ -35,9 +45,9 @@ export default async function SuppliersPage() {
           { key: "leadTimeDays", label: "Lead time (วัน)", type: "number", placeholder: "7" },
           { key: "isActive", label: "สถานะ", type: "checkbox", placeholder: "เปิดใช้งาน" },
         ]}
-        toFormValues={(r) => ({ code: r.code, nameTh: r.nameTh, nameEn: r.nameEn, contact: r.contact ?? "", phone: r.phone ?? "", email: r.email ?? "", leadTimeDays: r.leadTimeDays, isActive: r.isActive })}
-        onCreate={(v) => createSupplier({ code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), contact: String(v.contact || ""), phone: String(v.phone || ""), email: String(v.email || ""), leadTimeDays: Number(v.leadTimeDays || 7), isActive: Boolean(v.isActive ?? true) })}
-        onUpdate={(id, v) => updateSupplier(id, { code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), contact: String(v.contact || ""), phone: String(v.phone || ""), email: String(v.email || ""), leadTimeDays: Number(v.leadTimeDays || 7), isActive: Boolean(v.isActive ?? true) })}
+        onCreate={async (v) => { await createSupplier({ code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), contact: String(v.contact || ""), phone: String(v.phone || ""), email: String(v.email || ""), leadTimeDays: Number(v.leadTimeDays || 7), isActive: Boolean(v.isActive ?? true) }); }}
+        onUpdate={async (id, v) => { await updateSupplier(id, { code: String(v.code), nameTh: String(v.nameTh), nameEn: String(v.nameEn), contact: String(v.contact || ""), phone: String(v.phone || ""), email: String(v.email || ""), leadTimeDays: Number(v.leadTimeDays || 7), isActive: Boolean(v.isActive ?? true) }); }}
+        onDataChanged={reload}
       />
     </div>
   );
