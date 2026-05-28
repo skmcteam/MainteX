@@ -71,7 +71,7 @@ export function WOCloseDialog({ open, onClose, woId, woNumber }: Props) {
           style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
         />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 shadow-2xl"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl p-6"
           style={{ background: "var(--panel)", border: "0.5px solid var(--line)" }}
         >
           <div className="mb-5 flex items-center justify-between">

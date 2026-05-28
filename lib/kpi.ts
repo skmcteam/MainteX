@@ -15,10 +15,21 @@ export interface KPIResult {
 export function computeKPIs(input: KPIInput): KPIResult {
   const { totalUptimeHours, correctiveWOCount, totalRepairMinutes, holdMinutes } = input;
 
+  // Net repair time excludes hold time (waiting for parts/approval, not actual work)
   const repairHours = (totalRepairMinutes - holdMinutes) / 60;
+
+  // MTBF = Total uptime / Number of failures (corrective WOs)
+  // Higher is better — measures how long the equipment runs between breakdowns
   const mtbf = correctiveWOCount > 0 ? totalUptimeHours / correctiveWOCount : 0;
+
+  // MTTR = Total net repair hours / Number of failures
+  // Lower is better — measures how quickly the team restores equipment
   const mttr = correctiveWOCount > 0 ? repairHours / correctiveWOCount : 0;
+
+  // Availability = MTBF / (MTBF + MTTR) × 100%
+  // Represents the fraction of planned time the equipment is actually operational
   const availability = mtbf + mttr > 0 ? (mtbf / (mtbf + mttr)) * 100 : 100;
+
   const downtimeHours = repairHours;
 
   return {
@@ -29,6 +40,8 @@ export function computeKPIs(input: KPIInput): KPIResult {
   };
 }
 
+// PM Compliance = (WOs completed on time) / (total planned WOs) × 100%
+// "On time" = WO closed before or on the nextDueDate of its originating PM plan
 export function computePMCompliance(
   plannedCount: number,
   completedOnTimeCount: number

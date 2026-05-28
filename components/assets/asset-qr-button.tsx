@@ -60,7 +60,7 @@ export function AssetQRButton({ assetCode, assetName, assetId }: Props) {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }} />
           <Dialog.Content
-            className="fixed left-1/2 top-1/2 z-50 w-64 -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 text-center shadow-2xl"
+            className="fixed left-1/2 top-1/2 z-50 w-64 -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 text-center"
             style={{ background: "var(--panel)", border: "0.5px solid var(--line)" }}
           >
             <div className="mb-4 flex items-center justify-between">

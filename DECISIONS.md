@@ -35,3 +35,21 @@ Upgraded from spec's v2 to v3 (v2 deprecated). The tooltip `formatter` type chan
 
 ### D-009: PostgreSQL user
 Development DB URL uses the macOS system username (`pisitsak.kr`) as the PostgreSQL user (default peer auth on macOS Homebrew). The `.env.example` shows `postgres` — update for production.
+
+### D-010: Gregorian Year (CE) vs. Buddhist Era (BE)
+**Decision:** All dates are stored and displayed using the **Gregorian calendar (CE)** — e.g. 2026, not 2569 BE.  
+**Rationale:** Prisma/PostgreSQL uses CE internally. `date-fns` operates in CE. Using BE only in display adds a +543 offset risk in date arithmetic (PM nextDueDate, calibration intervals, SLA hours). Keeping CE throughout eliminates an entire class of off-by-543-year bugs.  
+**Thai context:** Thai government and ISO standards both accept CE in technical systems; BE is used in official documents and UI-facing dates.  
+**Toggle implementation:** A `?era=be` query-param toggle (or user preference in localStorage) can be added to `lib/utils.ts → formatDate()` to display dates as BE (+543) for UI text while keeping all stored values and computations in CE.
+
+```ts
+// lib/utils.ts — proposed BE toggle (not yet implemented)
+export function formatDate(iso: string | null | undefined, opts?: { be?: boolean }): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  const year = opts?.be ? d.getFullYear() + 543 : d.getFullYear();
+  return `${d.getDate()} ${MONTH_TH[d.getMonth()]} ${year}`;
+}
+```
+
+**Status:** Toggle is **not yet implemented** — dates currently always display as CE. Add the `be` option to `formatDate()` and a settings toggle (localStorage key `dateEra`) when BE display is required by end-users.

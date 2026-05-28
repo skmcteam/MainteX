@@ -6,35 +6,81 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createNotificationEvent } from "@/lib/notifications";
 
-export async function getSpareParts() {
-  const rows = await prisma.sparePart.findMany({
-    where: { isDeleted: false },
-    include: {
-      unit: { select: { code: true, nameTh: true } },
-      supplier: { select: { code: true, nameTh: true } },
-      warehouse: { select: { code: true, nameTh: true } },
-    },
-    orderBy: { code: "asc" },
-  });
-  return rows.map((r) => ({
-    id: r.id,
-    code: r.code,
-    nameTh: r.nameTh,
-    nameEn: r.nameEn,
-    partNumber: r.partNumber,
-    stockOnHand: Number(r.stockOnHand),
-    reorderPoint: Number(r.reorderPoint),
+const PAGE_SIZE = 50;
+
+function serializePart(r: {
+  id: string; code: string; nameTh: string; nameEn: string; partNumber: string | null;
+  stockOnHand: { toNumber: () => number } | number; reorderPoint: { toNumber: () => number } | number;
+  unitCost: { toNumber: () => number } | number | null; shelfLocation: string | null;
+  description: string | null;
+  unit: { code: string; nameTh: string } | null;
+  supplier: { code: string; nameTh: string } | null;
+  warehouse: { code: string; nameTh: string } | null;
+}) {
+  const stock = Number(r.stockOnHand);
+  const reorder = Number(r.reorderPoint);
+  return {
+    id: r.id, code: r.code, nameTh: r.nameTh, nameEn: r.nameEn, partNumber: r.partNumber,
+    stockOnHand: stock, reorderPoint: reorder,
     unitCost: r.unitCost ? Number(r.unitCost) : null,
-    shelfLocation: r.shelfLocation,
-    description: r.description,
-    unit: r.unit,
-    supplier: r.supplier,
-    warehouse: r.warehouse,
-    isLowStock: Number(r.stockOnHand) <= Number(r.reorderPoint),
-  }));
+    shelfLocation: r.shelfLocation, description: r.description,
+    unit: r.unit, supplier: r.supplier, warehouse: r.warehouse,
+    isLowStock: stock <= reorder,
+  };
 }
 
-export type SparePartRow = Awaited<ReturnType<typeof getSpareParts>>[number];
+export async function getSpareParts(opts?: { q?: string; page?: number }) {
+  const { q, page = 1 } = opts ?? {};
+  const where = {
+    isDeleted: false,
+    ...(q?.trim()
+      ? {
+          OR: [
+            { code: { contains: q.trim(), mode: "insensitive" as const } },
+            { nameTh: { contains: q.trim(), mode: "insensitive" as const } },
+            { nameEn: { contains: q.trim(), mode: "insensitive" as const } },
+            { partNumber: { contains: q.trim(), mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const include = {
+    unit: { select: { code: true, nameTh: true } },
+    supplier: { select: { code: true, nameTh: true } },
+    warehouse: { select: { code: true, nameTh: true } },
+  };
+
+  const [rows, total] = await Promise.all([
+    prisma.sparePart.findMany({ where, include, orderBy: { code: "asc" }, take: PAGE_SIZE, skip: (page - 1) * PAGE_SIZE }),
+    prisma.sparePart.count({ where }),
+  ]);
+
+  return { data: rows.map(serializePart), total, page, pageSize: PAGE_SIZE, totalPages: Math.ceil(total / PAGE_SIZE) };
+}
+
+export type SparePartRow = Awaited<ReturnType<typeof getSpareParts>>["data"][number];
+
+// Cross-field comparison (stockOnHand <= reorderPoint) requires raw SQL
+export async function getLowStockParts() {
+  type RawRow = { id: string; code: string; nameTh: string; nameEn: string; partNumber: string | null; stockOnHand: number; reorderPoint: number; unitCost: number | null; shelfLocation: string | null; description: string | null };
+  const rows = await prisma.$queryRaw<RawRow[]>`
+    SELECT sp.id, sp.code, sp."nameTh", sp."nameEn", sp."partNumber",
+           sp."stockOnHand"::float, sp."reorderPoint"::float, sp."unitCost"::float,
+           sp."shelfLocation", sp.description
+    FROM "SparePart" sp
+    WHERE sp."isDeleted" = false AND sp."stockOnHand" <= sp."reorderPoint"
+    ORDER BY sp.code ASC
+  `;
+  return rows.map((r) => ({ ...r, unit: null as null, supplier: null as null, warehouse: null as null, isLowStock: true }));
+}
+
+export async function getLowStockCount() {
+  const result = await prisma.$queryRaw<[{ count: bigint }]>`
+    SELECT COUNT(*) FROM "SparePart" WHERE "isDeleted" = false AND "stockOnHand" <= "reorderPoint"
+  `;
+  return Number(result[0].count);
+}
 
 export async function getPartsFormData() {
   const [units, suppliers, warehouses] = await Promise.all([

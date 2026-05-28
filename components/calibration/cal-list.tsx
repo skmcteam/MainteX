@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Gauge, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { Search, Gauge, AlertTriangle, CheckCircle2, Clock, Pencil } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { CalStatusPill } from "@/components/shared/status-pill";
 import { CalFormModal } from "./cal-form-modal";
@@ -27,6 +27,8 @@ export function CalList({ data, labs }: Props) {
   const [search, setSearch] = useState("");
   const [selectedAsset, setSelectedAsset] = useState<CalRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  type EditTarget = { id: string; calDate: string; nextCalDate: string; certNumber?: string | null; labId?: string | null; result?: string | null; notes?: string | null };
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
 
   const filtered = useMemo(() => {
     let rows = data;
@@ -193,14 +195,37 @@ export function CalList({ data, labs }: Props) {
                       <td className="px-4 py-3" style={{ color: "var(--text-sub)" }}>
                         {row.calPeriodMonths ?? "-"}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => openModal(row)}
-                          className="rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all active:scale-95"
-                          style={{ background: "var(--brand-soft)", color: "var(--brand)" }}
-                        >
-                          บันทึกผล
-                        </button>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {row.lastCalibration && (
+                            <button
+                              onClick={() => {
+                                setSelectedAsset(row);
+                                setEditTarget({
+                                  id: row.lastCalibration!.id,
+                                  calDate: row.lastCalibration!.calDate,
+                                  nextCalDate: row.lastCalibration!.nextCalDate,
+                                  certNumber: row.lastCalibration!.certNumber,
+                                  result: row.lastCalibration!.result,
+                                });
+                                setModalOpen(true);
+                              }}
+                              aria-label={`แก้ไขผลสอบเทียบล่าสุด ${row.code}`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-panel-2"
+                              style={{ color: "var(--text-sub)" }}
+                            >
+                              <Pencil size={13} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => { setSelectedAsset(row); setEditTarget(null); setModalOpen(true); }}
+                            aria-label={`บันทึกผลสอบเทียบใหม่ ${row.code}`}
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all active:scale-95"
+                            style={{ background: "var(--brand-soft)", color: "var(--brand)" }}
+                          >
+                            บันทึกผล
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -219,9 +244,10 @@ export function CalList({ data, labs }: Props) {
 
       <CalFormModal
         open={modalOpen}
-        onClose={() => { setModalOpen(false); setSelectedAsset(null); }}
+        onClose={() => { setModalOpen(false); setSelectedAsset(null); setEditTarget(null); }}
         asset={selectedAsset}
         labs={labs}
+        editTarget={editTarget}
       />
     </>
   );

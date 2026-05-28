@@ -79,7 +79,7 @@ export function WOFormModal({ open, onClose, formData }: Props) {
           style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }}
         />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl p-6 shadow-2xl"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl p-6"
           style={{
             background: "var(--panel)",
             border: "0.5px solid var(--line)",
@@ -91,7 +91,8 @@ export function WOFormModal({ open, onClose, formData }: Props) {
             <Dialog.Title className="text-sm font-semibold" style={{ color: "var(--text)" }}>
               สร้างใบสั่งซ่อมใหม่
             </Dialog.Title>
-            <button onClick={handleClose} className="rounded-lg p-1.5" style={{ color: "var(--text-sub)" }}>
+            <button onClick={handleClose} aria-label="ปิด"
+              className="rounded-lg p-1.5" style={{ color: "var(--text-sub)" }}>
               <X size={16} />
             </button>
           </div>

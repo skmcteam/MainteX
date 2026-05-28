@@ -56,7 +56,7 @@ function SortableStep({
       </button>
 
       <div
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
         style={{ background: "var(--brand)" }}
       >
         {step.stepNumber}

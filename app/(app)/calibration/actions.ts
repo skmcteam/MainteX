@@ -85,6 +85,36 @@ const CalibrationSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
+export async function updateCalibration(id: string, input: z.infer<typeof CalibrationSchema>) {
+  const session = await requireAuth();
+  const data = CalibrationSchema.parse(input);
+  const calDate = new Date(data.calDate);
+  const nextCalDate = new Date(data.nextCalDate);
+
+  await prisma.$transaction([
+    prisma.calibration.update({
+      where: { id },
+      data: { calDate, nextCalDate, certNumber: data.certNumber, labId: data.labId, result: data.result, notes: data.notes },
+    }),
+    // Refresh asset's cal dates based on updated record
+    prisma.asset.update({
+      where: { id: data.assetId },
+      data: { lastCalDate: calDate, nextCalDate, calStatus: "NORMAL", updatedBy: session.user.id },
+    }),
+  ]);
+
+  await writeAuditLog({
+    userId: session.user.id,
+    entity: "Calibration",
+    entityId: id,
+    action: "UPDATE",
+    after: { calDate: data.calDate, nextCalDate: data.nextCalDate },
+  });
+
+  revalidatePath("/calibration");
+  return { success: true };
+}
+
 export async function recordCalibration(input: z.infer<typeof CalibrationSchema>) {
   const session = await requireAuth();
   const data = CalibrationSchema.parse(input);

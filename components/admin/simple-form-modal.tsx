@@ -58,7 +58,7 @@ export function SimpleFormModal({ open, onClose, title, fields, defaultValues, o
     <Dialog.Root open={open} onOpenChange={(v) => !v && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }} />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl p-6 shadow-2xl" style={{ background: "var(--panel)", border: "0.5px solid var(--line)", maxHeight: "90vh" }}>
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl p-6" style={{ background: "var(--panel)", border: "0.5px solid var(--line)", maxHeight: "90vh" }}>
           <div className="mb-5 flex items-center justify-between">
             <Dialog.Title className="text-sm font-semibold" style={{ color: "var(--text)" }}>{title}</Dialog.Title>
             <button onClick={onClose} style={{ color: "var(--text-sub)" }}><X size={16} /></button>
@@ -109,7 +109,8 @@ export function SimpleFormModal({ open, onClose, title, fields, defaultValues, o
               </div>
             ))}
             <div className="flex justify-end gap-2 pt-2">
-              <button onClick={onClose} className="rounded-lg px-4 py-2 text-xs font-medium" style={{ background: "var(--panel-2)", color: "var(--text-sub)", border: "0.5px solid var(--line)" }}>ยกเลิก</button>
+              <button onClick={onClose} aria-label="ปิด"
+              className="rounded-lg px-4 py-2 text-xs font-medium" style={{ background: "var(--panel-2)", color: "var(--text-sub)", border: "0.5px solid var(--line)" }}>ยกเลิก</button>
               <button onClick={handleSave} disabled={loading} className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium text-white disabled:opacity-60" style={{ background: "var(--brand)" }}>
                 {loading && <Loader2 size={13} className="animate-spin" />}
                 บันทึก
