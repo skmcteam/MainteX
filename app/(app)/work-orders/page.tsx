@@ -1,26 +1,26 @@
-import { getTranslations } from "next-intl/server";
-import { Plus } from "lucide-react";
+import { getWorkOrders, getWOFormData } from "@/app/(app)/work-orders/actions";
 import { WorkOrderList } from "@/components/work-orders/wo-list";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function WorkOrdersPage() {
-  const t = await getTranslations();
+  const [data, formData] = await Promise.all([
+    getWorkOrders(),
+    getWOFormData(),
+  ]);
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>
-            {t("wo.title")}
-          </h1>
-        </div>
-        <button
-          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-white transition-all"
-          style={{ background: "var(--brand)" }}
-        >
-          <Plus size={14} />
-          {t("wo.create")}
-        </button>
+      <div>
+        <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>
+          ใบสั่งซ่อม
+        </h1>
+        <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>
+          ระบบบริหารจัดการใบสั่งซ่อมบำรุง · {data.length} รายการ
+        </p>
       </div>
-      <WorkOrderList />
+      <WorkOrderList data={data} formData={formData} />
     </div>
   );
 }

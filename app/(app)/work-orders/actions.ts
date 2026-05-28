@@ -1,0 +1,233 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { WOStatus } from "@prisma/client";
+import { generateWONumber } from "@/lib/utils";
+
+// ─── Read ─────────────────────────────────────────────────────
+
+export async function getWorkOrders(status?: WOStatus | "all") {
+  const rows = await prisma.workOrder.findMany({
+    where: {
+      isDeleted: false,
+      ...(status && status !== "all" ? { status } : {}),
+    },
+    include: {
+      asset: { select: { code: true, nameTh: true, category: true } },
+      priority: { select: { code: true, nameTh: true, color: true } },
+      type: { select: { code: true, nameTh: true, color: true } },
+      assignee: { select: { nameTh: true } },
+      department: { select: { nameTh: true } },
+      _count: { select: { checklistItems: true, parts: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+  });
+
+  return rows.map((r) => ({
+    id: r.id,
+    woNumber: r.woNumber,
+    title: r.title,
+    status: r.status,
+    createdAt: r.createdAt.toISOString(),
+    startTime: r.startTime?.toISOString() ?? null,
+    endTime: r.endTime?.toISOString() ?? null,
+    asset: r.asset,
+    priority: r.priority,
+    type: r.type,
+    assignee: r.assignee,
+    department: r.department,
+    _count: r._count,
+  }));
+}
+
+export type WORow = Awaited<ReturnType<typeof getWorkOrders>>[number];
+
+export async function getWorkOrder(id: string) {
+  const r = await prisma.workOrder.findUnique({
+    where: { id },
+    include: {
+      asset: { select: { id: true, code: true, nameTh: true, category: true, status: true } },
+      priority: true,
+      type: true,
+      creator: { select: { id: true, nameTh: true, nameEn: true, email: true } },
+      assignee: { select: { id: true, nameTh: true, nameEn: true, email: true } },
+      department: { select: { nameTh: true } },
+      failureCode: true,
+      causeCode: true,
+      actionCode: true,
+      parts: {
+        include: {
+          sparePart: {
+            select: {
+              code: true,
+              nameTh: true,
+              unit: { select: { code: true } },
+            },
+          },
+        },
+      },
+      checklistItems: { orderBy: { createdAt: "asc" } },
+      approvals: {
+        include: { user: { select: { nameTh: true } } },
+        orderBy: { stepNumber: "asc" },
+      },
+      attachments: { orderBy: { createdAt: "asc" } },
+    },
+  });
+
+  if (!r) return null;
+
+  return {
+    id: r.id,
+    woNumber: r.woNumber,
+    title: r.title,
+    description: r.description,
+    status: r.status,
+    notes: r.notes,
+    laborHours: r.laborHours ? Number(r.laborHours) : null,
+    laborCost: r.laborCost ? Number(r.laborCost) : null,
+    totalPartsCost: r.totalPartsCost ? Number(r.totalPartsCost) : null,
+    holdDuration: r.holdDuration,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+    startTime: r.startTime?.toISOString() ?? null,
+    endTime: r.endTime?.toISOString() ?? null,
+    asset: r.asset,
+    priority: r.priority,
+    type: r.type,
+    creator: r.creator,
+    assignee: r.assignee,
+    department: r.department,
+    failureCode: r.failureCode,
+    causeCode: r.causeCode,
+    actionCode: r.actionCode,
+    parts: r.parts.map((p) => ({
+      id: p.id,
+      quantity: Number(p.quantity),
+      unitCost: p.unitCost ? Number(p.unitCost) : null,
+      sparePart: p.sparePart,
+    })),
+    checklistItems: r.checklistItems,
+    approvals: r.approvals,
+    attachments: r.attachments,
+  };
+}
+
+export type WODetail = NonNullable<Awaited<ReturnType<typeof getWorkOrder>>>;
+
+export async function getWOFormData() {
+  const [priorities, types, assets, users, departments] = await Promise.all([
+    prisma.priority.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.wOType.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.asset.findMany({
+      where: { status: "ACTIVE", isDeleted: false },
+      select: { id: true, code: true, nameTh: true, category: true },
+      orderBy: { code: "asc" },
+      take: 500,
+    }),
+    prisma.user.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        nameTh: true,
+        nameEn: true,
+        role: { select: { code: true, nameTh: true } },
+      },
+      orderBy: { nameTh: "asc" },
+    }),
+    prisma.department.findMany({ orderBy: { code: "asc" } }),
+  ]);
+  return { priorities, types, assets, users, departments };
+}
+
+export type WOFormData = Awaited<ReturnType<typeof getWOFormData>>;
+
+// ─── Write ────────────────────────────────────────────────────
+
+const WOCreateSchema = z.object({
+  title: z.string().min(1, "กรุณาระบุหัวข้อ"),
+  description: z.string().optional().nullable(),
+  typeId: z.string().min(1, "กรุณาเลือกประเภท"),
+  priorityId: z.string().min(1, "กรุณาเลือกความเร่งด่วน"),
+  assetId: z.string().min(1, "กรุณาเลือกเครื่องจักร/อุปกรณ์"),
+  departmentId: z.string().optional().nullable(),
+  assigneeId: z.string().optional().nullable(),
+});
+
+export async function createWorkOrder(input: z.infer<typeof WOCreateSchema>) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const data = WOCreateSchema.parse(input);
+
+  // Generate WO number atomically
+  const series = await prisma.wONumberSeries.findFirst();
+  let woNumber: string;
+
+  if (series) {
+    woNumber = generateWONumber(series.pattern, series.lastNumber);
+    await prisma.wONumberSeries.update({
+      where: { id: series.id },
+      data: { lastNumber: series.lastNumber + 1 },
+    });
+  } else {
+    const newSeries = await prisma.wONumberSeries.create({
+      data: { pattern: "WO-{YY}{MM}-{####}", lastNumber: 1 },
+    });
+    woNumber = generateWONumber(newSeries.pattern, 0);
+  }
+
+  const asset = await prisma.asset.findUnique({
+    where: { id: data.assetId },
+    select: { departmentId: true },
+  });
+
+  const wo = await prisma.workOrder.create({
+    data: {
+      woNumber,
+      title: data.title,
+      description: data.description,
+      typeId: data.typeId,
+      priorityId: data.priorityId,
+      assetId: data.assetId,
+      departmentId: data.departmentId ?? asset?.departmentId,
+      assigneeId: data.assigneeId,
+      creatorId: session.user.id,
+      status: "OPEN",
+    },
+  });
+
+  revalidatePath("/work-orders");
+  return { success: true, id: wo.id };
+}
+
+export async function updateWOStatus(
+  id: string,
+  status: WOStatus,
+  extras?: { notes?: string; laborHours?: number }
+) {
+  const update: Record<string, unknown> = { status };
+  if (status === "IN_PROGRESS") update.startTime = new Date();
+  if (status === "DONE") {
+    update.endTime = new Date();
+    if (extras?.laborHours) update.laborHours = extras.laborHours;
+  }
+  if (extras?.notes) update.notes = extras.notes;
+
+  await prisma.workOrder.update({ where: { id }, data: update });
+  revalidatePath("/work-orders");
+  revalidatePath(`/work-orders/${id}`);
+  return { success: true };
+}
+
+export async function updateChecklistItem(id: string, status: "PENDING" | "PASS" | "FAIL" | "NA", notes?: string) {
+  await prisma.wOChecklistItem.update({
+    where: { id },
+    data: { status, ...(notes !== undefined ? { notes } : {}) },
+  });
+  return { success: true };
+}

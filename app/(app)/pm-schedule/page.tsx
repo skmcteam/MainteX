@@ -1,14 +1,34 @@
-import { getTranslations } from "next-intl/server";
-import { CalendarClock } from "lucide-react";
+import { getPMPlans, getPMFormData } from "@/app/(app)/pm-schedule/actions";
+import { PMList } from "@/components/pm/pm-list";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function PMSchedulePage() {
-  const t = await getTranslations();
+  const [data, formData] = await Promise.all([
+    getPMPlans(),
+    getPMFormData(),
+  ]);
+
+  const overdue = data.filter((p) => {
+    if (!p.nextDueDate) return false;
+    return new Date(p.nextDueDate) < new Date();
+  }).length;
+
   return (
-    <div>
-      <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>{t("pm.title")}</h1>
-      <div className="mt-4 panel-border p-8 text-center" style={{ color: "var(--text-sub)" }}>
-        <CalendarClock size={32} className="mx-auto mb-3 opacity-40" />
-        <p className="text-sm">Phase 2 — PM Schedule + Auto-PM Wizard</p>
+    <div className="flex flex-col gap-4">
+      <div>
+        <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>
+          แผนบำรุงรักษาเชิงป้องกัน (PM)
+        </h1>
+        <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>
+          แผน PM ทั้งหมด {data.length} รายการ
+          {overdue > 0 && (
+            <span style={{ color: "var(--danger)" }}> · เกินกำหนด {overdue} รายการ</span>
+          )}
+        </p>
       </div>
+      <PMList data={data} formData={formData} />
     </div>
   );
 }

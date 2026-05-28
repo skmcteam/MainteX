@@ -187,4 +187,26 @@ body {
     background-color: var(--panel-2);
     cursor: pointer;
   }
+
+  .form-input {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-size: 12px;
+    background: var(--panel-2);
+    border: 0.5px solid var(--line);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus {
+    border-color: var(--brand);
+  }
+  .form-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .form-input option {
+    background: var(--panel);
+  }
 }
