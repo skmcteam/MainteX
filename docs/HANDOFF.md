@@ -1,4 +1,4 @@
-# Handoff State — SKMC CMMS
+# Handoff State — MainteX
 
 > Current as of commit `0238a5d` (2026-05-28). All four phases complete.
 

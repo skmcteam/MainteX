@@ -58,7 +58,7 @@ export default function LoginPage() {
             <Wrench className="h-7 w-7" style={{ color: "var(--brand)" }} />
           </div>
           <h1 className="text-xl font-semibold" style={{ color: "var(--text)" }}>
-            SKMC CMMS
+            MainteX
           </h1>
           <p className="mt-1 text-sm" style={{ color: "var(--text-sub)" }}>
             ระบบบริหารจัดการการบำรุงรักษา
@@ -187,7 +187,7 @@ export default function LoginPage() {
         </div>
 
         <p className="mt-6 text-center text-xs" style={{ color: "var(--text-disabled)" }}>
-          SKMC CMMS v0.1 · Powered by SKMC Engineering
+          MainteX v0.1 · Powered by MainteX
         </p>
       </div>
     </div>

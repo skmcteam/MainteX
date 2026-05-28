@@ -1,4 +1,4 @@
-# AI Context — SKMC CMMS
+# AI Context — MainteX
 
 > Fast orientation for a new AI session. Read this first, then ARCHITECTURE.md for depth.
 
@@ -9,7 +9,7 @@ A production-grade **Computerized Maintenance Management System (CMMS)** for SKM
 ## Repo Location
 
 ```
-/Users/pisitsak.kr/Documents/AuraOne/
+/Users/pisitsak.kr/Documents/MainteX/
 ```
 
 ## Dev Server

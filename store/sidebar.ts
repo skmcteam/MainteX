@@ -16,6 +16,6 @@ export const useSidebar = create<SidebarStore>()(
       toggle: () => set((s) => ({ collapsed: !s.collapsed })),
       setCollapsed: (v) => set({ collapsed: v }),
     }),
-    { name: "skmc-sidebar" }
+    { name: "maintex-sidebar" }
   )
 );

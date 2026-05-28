@@ -107,7 +107,7 @@ export function Sidebar() {
         {!collapsed && (
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold" style={{ color: "var(--text)" }}>
-              SKMC CMMS
+              MainteX
             </p>
             <p className="label-caps truncate" style={{ fontSize: "9.5px" }}>
               Maintenance System

@@ -7,7 +7,7 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    const stored = localStorage.getItem("skmc-theme") as "light" | "dark" | null;
+    const stored = localStorage.getItem("maintex-theme") as "light" | "dark" | null;
     const initial = stored ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     setTheme(initial);
     document.documentElement.setAttribute("data-theme", initial);
@@ -17,7 +17,7 @@ export function ThemeToggle() {
     const next = theme === "light" ? "dark" : "light";
     setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("skmc-theme", next);
+    localStorage.setItem("maintex-theme", next);
   };
 
   return (

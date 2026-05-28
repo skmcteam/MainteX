@@ -4,7 +4,7 @@ import * as bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding SKMC CMMS database...");
+  console.log("🌱 Seeding MainteX database...");
 
   // ─── Plant & Organization ─────────────────────────────────
   const plant = await prisma.plant.upsert({

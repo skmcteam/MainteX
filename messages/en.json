@@ -70,7 +70,7 @@
     "email": "Email",
     "password": "Password",
     "loginButton": "Sign In",
-    "loginTitle": "SKMC CMMS",
+    "loginTitle": "MainteX",
     "loginSubtitle": "Computerized Maintenance Management System",
     "invalidCredentials": "Invalid email or password",
     "welcome": "Welcome"

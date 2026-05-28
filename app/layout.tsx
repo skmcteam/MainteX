@@ -5,10 +5,10 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SKMC CMMS",
-  description: "Computerized Maintenance Management System — SKMC Factory",
+  title: "MainteX",
+  description: "MainteX — Maintenance Management",
   manifest: "/manifest.json",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "SKMC CMMS" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "MainteX" },
 };
 
 export const viewport: Viewport = {

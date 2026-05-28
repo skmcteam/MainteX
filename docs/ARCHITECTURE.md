@@ -1,9 +1,9 @@
-# Architecture — SKMC CMMS
+# Architecture — MainteX
 
 ## Directory Structure
 
 ```
-AuraOne/
+MainteX/
 ├── app/
 │   ├── (app)/                  ← Protected app shell (auth-gated by layout.tsx)
 │   │   ├── layout.tsx          ← Auth check, Sidebar+Topbar+BottomNav, Toaster

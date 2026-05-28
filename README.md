@@ -1,4 +1,4 @@
-# SKMC CMMS
+# MainteX
 
 Computerized Maintenance Management System for SKMC factory, Thailand.
 

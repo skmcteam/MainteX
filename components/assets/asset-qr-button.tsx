@@ -35,7 +35,7 @@ export function AssetQRButton({ assetCode, assetName, assetId }: Props) {
       </head><body>
         <div class="label">
           <h2>${assetName}</h2>
-          <p>SKMC Factory — CMMS</p>
+          <p>SKMC Factory — MainteX</p>
           ${svg}
           <div class="code">${assetCode}</div>
         </div>

@@ -1,4 +1,4 @@
-# Architecture Decisions — SKMC CMMS
+# Architecture Decisions — MainteX
 
 ## D-001 · next-intl without URL routing
 

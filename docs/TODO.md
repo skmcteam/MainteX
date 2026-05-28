@@ -1,4 +1,4 @@
-# TODO — SKMC CMMS
+# TODO — MainteX
 
 > Prioritized backlog as of 2026-05-28. Phase 3 is next.
 

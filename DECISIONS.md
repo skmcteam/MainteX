@@ -3,7 +3,7 @@
 ## Phase 1 Decisions
 
 ### D-001: Project Root
-Project is built directly in `AuraOne/` (the existing directory) rather than a nested `skmc-cmms/` subfolder, since `.gitignore` / `.env.example` were already present.
+Project is built directly in `MainteX/` (the existing directory) rather than a nested `maintex/` subfolder, since `.gitignore` / `.env.example` were already present.
 
 ### D-002: next-intl "without routing" mode
 **Problem:** `next-intl` with `localePrefix: "as-needed"` rewrites paths internally (e.g., `/login` → `/th/login`), causing 404s because there's no `[locale]` folder in the App Router structure.  
