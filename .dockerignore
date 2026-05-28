@@ -1,41 +1,13 @@
-# Dependencies
-node_modules
-npm-debug.log
-
-# Next.js build output
 .next
-out
-
-# Environment files
+node_modules
+.git
+.gitignore
+*.md
 .env
 .env.local
 .env.*.local
-
-# Development files
-.git
-.gitignore
-README.md
-.eslintrc.json
-.prettierrc
-.vscode
-.idea
-
-# Testing
-coverage
-*.test.ts
-*.test.tsx
-*.spec.ts
-*.spec.tsx
-
-# Documentation
-*.md
-!README.md
-
-# Prisma (keep schema, ignore generated)
-prisma/*.db
-prisma/migrations/*
-!prisma/migrations/migration_lock.toml
-
-# Misc
+Dockerfile
+docker-compose*.yml
 .DS_Store
 *.pem
+tsconfig.tsbuildinfo

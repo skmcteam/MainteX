@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: skmc
+      POSTGRES_PASSWORD: staging_pass_skmc
+      POSTGRES_DB: skmc_cmms_staging
+    volumes:
+      - postgres_staging:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skmc -d skmc_cmms_staging"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    env_file: .env.staging
+    environment:
+      # Override DB URL to use Docker service name (overrides .env.staging)
+      DATABASE_URL: postgresql://skmc:staging_pass_skmc@db:5432/skmc_cmms_staging
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_staging:
+    name: skmc_cmms_staging_db

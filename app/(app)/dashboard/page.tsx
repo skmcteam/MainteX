@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import {
   ClipboardList,
@@ -116,16 +117,16 @@ export default async function DashboardPage() {
             <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>
               {t("dashboard.recentWOs")}
             </p>
-            <a href="/work-orders" className="text-xs" style={{ color: "var(--brand)" }}>
+            <Link href="/work-orders" className="text-xs" style={{ color: "var(--brand)" }}>
               ดูทั้งหมด →
-            </a>
+            </Link>
           </div>
           {stats.recentWOs.length === 0 ? (
             <EmptyState title="ไม่มีใบสั่งซ่อม" icon={ClipboardList} />
           ) : (
             <div>
               {stats.recentWOs.map((wo) => (
-                <a
+                <Link
                   key={wo.id}
                   href={`/work-orders/${wo.id}`}
                   className="row-hover flex items-start gap-3 px-4 py-2.5"
@@ -149,7 +150,7 @@ export default async function DashboardPage() {
                       {wo.assetCode} · {formatDate(wo.createdAt)}
                     </p>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           )}
@@ -164,9 +165,9 @@ export default async function DashboardPage() {
             <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>
               {t("dashboard.upcomingPMs")}
             </p>
-            <a href="/pm-schedule" className="text-xs" style={{ color: "var(--brand)" }}>
+            <Link href="/pm-schedule" className="text-xs" style={{ color: "var(--brand)" }}>
               ดูทั้งหมด →
-            </a>
+            </Link>
           </div>
           {stats.upcomingPMs.length === 0 ? (
             <EmptyState title="ไม่มี PM ที่จะถึง" icon={CalendarCheck} />
