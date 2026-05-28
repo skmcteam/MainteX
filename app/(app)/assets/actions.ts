@@ -8,22 +8,51 @@ import { AssetCategory, AssetStatus } from "@prisma/client";
 
 // ─── Read ─────────────────────────────────────────────────────
 
-export async function getAssets(category: AssetCategory) {
-  const rows = await prisma.asset.findMany({
-    where: { category, isDeleted: false },
-    include: {
-      assetClass: { select: { code: true, nameTh: true, color: true } },
-      department: { select: { code: true, nameTh: true } },
-      section: { select: { code: true, nameTh: true } },
-      area: { select: { code: true, nameTh: true } },
-      instrumentType: { select: { code: true, nameTh: true } },
-      calLab: { select: { code: true, nameTh: true } },
-      _count: { select: { workOrders: true, pmPlans: true } },
-    },
-    orderBy: { code: "asc" },
-  });
+const ASSET_PAGE_SIZE = 50;
 
-  return rows.map((r) => ({
+export async function getAssets(opts: { category: AssetCategory; q?: string; page?: number; status?: string }) {
+  const { category, q, page = 1, status } = opts;
+  const trimmed = q?.trim();
+
+  const searchClause = trimmed
+    ? {
+        OR: [
+          { code: { contains: trimmed, mode: "insensitive" as const } },
+          { nameTh: { contains: trimmed, mode: "insensitive" as const } },
+          { nameEn: { contains: trimmed, mode: "insensitive" as const } },
+          { manufacturer: { contains: trimmed, mode: "insensitive" as const } },
+          { model: { contains: trimmed, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
+
+  const baseWhere = { category, isDeleted: false, ...searchClause };
+  const where = { ...baseWhere, ...(status && status !== "all" ? { status: status as AssetStatus } : {}) };
+
+  const include = {
+    assetClass: { select: { code: true, nameTh: true, color: true } },
+    department: { select: { code: true, nameTh: true } },
+    section: { select: { code: true, nameTh: true } },
+    area: { select: { code: true, nameTh: true } },
+    instrumentType: { select: { code: true, nameTh: true } },
+    calLab: { select: { code: true, nameTh: true } },
+    _count: { select: { workOrders: true, pmPlans: true } },
+  };
+
+  const [rows, total, statusGroups] = await Promise.all([
+    prisma.asset.findMany({ where, include, orderBy: { code: "asc" }, take: ASSET_PAGE_SIZE, skip: (page - 1) * ASSET_PAGE_SIZE }),
+    prisma.asset.count({ where }),
+    // counts per status (with search + category, without status filter) for tab badges
+    prisma.asset.groupBy({ by: ["status"], where: baseWhere, _count: { status: true } }),
+  ]);
+
+  const statusCounts: Record<string, number> = { all: 0 };
+  for (const g of statusGroups) {
+    statusCounts[g.status] = g._count.status;
+    statusCounts.all = (statusCounts.all ?? 0) + g._count.status;
+  }
+
+  const data = rows.map((r) => ({
     id: r.id,
     code: r.code,
     nameTh: r.nameTh,
@@ -48,9 +77,11 @@ export async function getAssets(category: AssetCategory) {
     calLab: r.calLab,
     _count: r._count,
   }));
+
+  return { data, total, page, pageSize: ASSET_PAGE_SIZE, totalPages: Math.ceil(total / ASSET_PAGE_SIZE), statusCounts };
 }
 
-export type AssetRow = Awaited<ReturnType<typeof getAssets>>[number];
+export type AssetRow = Awaited<ReturnType<typeof getAssets>>["data"][number];
 
 export async function getAsset(id: string) {
   const r = await prisma.asset.findUnique({

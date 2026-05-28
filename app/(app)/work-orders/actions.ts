@@ -10,25 +10,57 @@ import { createNotificationEvent } from "@/lib/notifications";
 
 // ─── Read ─────────────────────────────────────────────────────
 
-export async function getWorkOrders(status?: WOStatus | "all") {
-  const rows = await prisma.workOrder.findMany({
-    where: {
-      isDeleted: false,
-      ...(status && status !== "all" ? { status } : {}),
-    },
-    include: {
-      asset: { select: { code: true, nameTh: true, category: true } },
-      priority: { select: { code: true, nameTh: true, color: true } },
-      type: { select: { code: true, nameTh: true, color: true } },
-      assignee: { select: { nameTh: true } },
-      department: { select: { nameTh: true } },
-      _count: { select: { checklistItems: true, parts: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+const WO_PAGE_SIZE = 50;
 
-  return rows.map((r) => ({
+export async function getWorkOrders(opts?: { q?: string; page?: number; status?: string }) {
+  const { q, page = 1, status } = opts ?? {};
+  const trimmed = q?.trim();
+
+  const searchClause = trimmed
+    ? {
+        OR: [
+          { woNumber: { contains: trimmed, mode: "insensitive" as const } },
+          { title: { contains: trimmed, mode: "insensitive" as const } },
+          { asset: { OR: [
+            { code: { contains: trimmed, mode: "insensitive" as const } },
+            { nameTh: { contains: trimmed, mode: "insensitive" as const } },
+          ]}},
+        ],
+      }
+    : {};
+
+  const baseWhere = { isDeleted: false, ...searchClause };
+  const where = { ...baseWhere, ...(status && status !== "all" ? { status: status as WOStatus } : {}) };
+
+  const include = {
+    asset: { select: { code: true, nameTh: true, category: true } },
+    priority: { select: { code: true, nameTh: true, color: true } },
+    type: { select: { code: true, nameTh: true, color: true } },
+    assignee: { select: { nameTh: true } },
+    department: { select: { nameTh: true } },
+    _count: { select: { checklistItems: true, parts: true } },
+  };
+
+  const [rows, total, statusGroups] = await Promise.all([
+    prisma.workOrder.findMany({
+      where,
+      include,
+      orderBy: { createdAt: "desc" },
+      take: WO_PAGE_SIZE,
+      skip: (page - 1) * WO_PAGE_SIZE,
+    }),
+    prisma.workOrder.count({ where }),
+    // counts per status (with search, without status filter) for tab badges
+    prisma.workOrder.groupBy({ by: ["status"], where: baseWhere, _count: { status: true } }),
+  ]);
+
+  const statusCounts: Record<string, number> = { all: 0 };
+  for (const g of statusGroups) {
+    statusCounts[g.status] = g._count.status;
+    statusCounts.all = (statusCounts.all ?? 0) + g._count.status;
+  }
+
+  const data = rows.map((r) => ({
     id: r.id,
     woNumber: r.woNumber,
     title: r.title,
@@ -43,9 +75,11 @@ export async function getWorkOrders(status?: WOStatus | "all") {
     department: r.department,
     _count: r._count,
   }));
+
+  return { data, total, page, pageSize: WO_PAGE_SIZE, totalPages: Math.ceil(total / WO_PAGE_SIZE), statusCounts };
 }
 
-export type WORow = Awaited<ReturnType<typeof getWorkOrders>>[number];
+export type WORow = Awaited<ReturnType<typeof getWorkOrders>>["data"][number];
 
 export async function getWorkOrder(id: string) {
   const r = await prisma.workOrder.findUnique({

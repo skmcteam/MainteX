@@ -4,9 +4,18 @@ import { WorkOrderList } from "@/components/work-orders/wo-list";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function WorkOrdersPage() {
-  const [data, formData] = await Promise.all([
-    getWorkOrders(),
+interface Props {
+  searchParams: Promise<{ q?: string; page?: string; status?: string }>;
+}
+
+export default async function WorkOrdersPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const q = params.q ?? "";
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
+  const status = params.status ?? "all";
+
+  const [result, formData] = await Promise.all([
+    getWorkOrders({ q, page, status }),
     getWOFormData(),
   ]);
 
@@ -17,10 +26,20 @@ export default async function WorkOrdersPage() {
           ใบสั่งซ่อม
         </h1>
         <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>
-          ระบบบริหารจัดการใบสั่งซ่อมบำรุง · {data.length} รายการ
+          ระบบบริหารจัดการใบสั่งซ่อมบำรุง · {result.statusCounts.all} รายการ
         </p>
       </div>
-      <WorkOrderList data={data} formData={formData} />
+      <WorkOrderList
+        data={result.data}
+        formData={formData}
+        total={result.total}
+        page={result.page}
+        totalPages={result.totalPages}
+        pageSize={result.pageSize}
+        statusCounts={result.statusCounts}
+        initialQ={q}
+        initialStatus={status}
+      />
     </div>
   );
 }
