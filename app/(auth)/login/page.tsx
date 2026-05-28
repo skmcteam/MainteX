@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const schema = z.object({
   email: z.string().email("อีเมลไม่ถูกต้อง"),
@@ -15,6 +16,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
@@ -61,7 +63,7 @@ export default function LoginPage() {
             MainteX
           </h1>
           <p className="mt-1 text-sm" style={{ color: "var(--text-sub)" }}>
-            ระบบบริหารจัดการการบำรุงรักษา
+            {t("loginSubtitle")}
           </p>
         </div>
 
