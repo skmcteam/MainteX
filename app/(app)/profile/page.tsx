@@ -42,7 +42,7 @@ export default async function ProfilePage() {
         {/* Avatar header */}
         <div className="flex items-center gap-4 p-6" style={{ borderBottom: "0.5px solid var(--line)", background: "var(--panel-2)" }}>
           <div
-            className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold text-white"
+            className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-semibold text-white"
             style={{ background: "var(--brand)" }}
           >
             {user.nameTh.charAt(0)}

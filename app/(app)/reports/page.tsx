@@ -118,7 +118,7 @@ export default async function ReportsPage() {
                 {badActors.map((a, i) => (
                   <tr key={a.code} style={{ borderBottom: "0.5px solid var(--line)" }}>
                     <td className="px-4 py-2.5">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold"
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold"
                         style={{ background: i < 3 ? "var(--danger-soft)" : "var(--panel-2)", color: i < 3 ? "var(--danger)" : "var(--text-sub)" }}>
                         {i + 1}
                       </span>
