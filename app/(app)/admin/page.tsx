@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { Settings, Users, Workflow, Tag, Building2, Layers, Gauge, Truck, BellRing } from "lucide-react";
+import { Settings, Users, Workflow, Tag, Building2, Layers, Gauge, Truck, BellRing, ListChecks } from "lucide-react";
 import Link from "next/link";
 
 const sections = [
@@ -12,6 +12,7 @@ const sections = [
   { href: "/admin/calibration-labs", icon: Gauge, titleTh: "ห้องปฏิบัติการ", descTh: "SP Metrology, PCaL ฯลฯ" },
   { href: "/admin/suppliers", icon: Truck, titleTh: "ผู้จำหน่าย", descTh: "ซัพพลายเออร์อะไหล่" },
   { href: "/admin/notification-rules", icon: BellRing, titleTh: "กฎการแจ้งเตือน", descTh: "event × audience × channel" },
+  { href: "/admin/checklist-templates", icon: ListChecks, titleTh: "รายการตรวจสอบ", descTh: "สร้าง checklist สำหรับ PM" },
 ];
 
 export default async function AdminPage() {
