@@ -51,13 +51,13 @@ export function PMCalendar({ data }: Props) {
     <div className="panel-border overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "0.5px solid var(--line)" }}>
-        <button onClick={prevMonth} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-panel-2" style={{ color: "var(--text-sub)" }}>
+        <button onClick={prevMonth} aria-label="เดือนก่อนหน้า" className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-panel-2" style={{ color: "var(--text-sub)" }}>
           <ChevronLeft size={16} />
         </button>
         <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>
           {MONTH_TH[month]} {year}
         </p>
-        <button onClick={nextMonth} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-panel-2" style={{ color: "var(--text-sub)" }}>
+        <button onClick={nextMonth} aria-label="เดือนถัดไป" className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-panel-2" style={{ color: "var(--text-sub)" }}>
           <ChevronRight size={16} />
         </button>
       </div>
