@@ -83,6 +83,16 @@ export async function getAssets(opts: { category: AssetCategory; q?: string; pag
 
 export type AssetRow = Awaited<ReturnType<typeof getAssets>>["data"][number];
 
+// Resolve an asset code (e.g. SK-P-001) to its id and category for QR routing.
+// Returns null if not found.
+export async function resolveAssetCode(code: string) {
+  const asset = await prisma.asset.findFirst({
+    where: { code: { equals: code.trim(), mode: "insensitive" }, isDeleted: false },
+    select: { id: true, category: true },
+  });
+  return asset ?? null;
+}
+
 export async function getAsset(id: string) {
   const r = await prisma.asset.findUnique({
     where: { id },
