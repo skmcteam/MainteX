@@ -134,7 +134,21 @@
     "return": "Return",
     "comment": "Comment",
     "attachments": "Attachments",
-    "spareParts": "Parts Used"
+    "spareParts": "Parts Used",
+    "searchPlaceholder": "Search WO# / Title...",
+    "empty": "No work orders found",
+    "emptyDesc": "Try changing filters or create a new work order",
+    "showing": "Showing {count} work orders",
+    "columns": {
+      "woNumber": "WO#",
+      "title": "Title",
+      "asset": "Asset",
+      "status": "Status",
+      "priority": "Priority",
+      "type": "Type",
+      "assignee": "Assignee",
+      "date": "Date"
+    }
   },
   "asset": {
     "title": "Assets",
@@ -207,7 +221,30 @@
     "lastDone": "Last Done",
     "leadTime": "Lead Time (days)",
     "checklist": "Checklist",
-    "generateWOs": "Generate WOs"
+    "generateWOs": "Generate WOs",
+    "status": {
+      "overdue": "Overdue",
+      "due_soon": "Due Soon",
+      "normal": "Normal"
+    },
+    "createPlan": "Create PM Plan",
+    "generateWOsBtn": "Generate WOs from PM",
+    "empty": "No PM plans found",
+    "intervalDays": "Every {days} days",
+    "daysOverdue": "{days} days overdue",
+    "daysUntil": "In {days} days",
+    "today": "Today",
+    "showing": "Showing {count}",
+    "generateSuccess": "Generated {created} PM WO(s) (skipped {skipped})",
+    "generateError": "An error occurred",
+    "columns": {
+      "asset": "Asset",
+      "status": "Status",
+      "frequency": "Frequency",
+      "checklist": "Checklist",
+      "nextDue": "Next",
+      "lastDone": "Last"
+    }
   },
   "cal": {
     "title": "Calibration",
@@ -221,7 +258,23 @@
     "status": {
       "NORMAL": "Normal",
       "DUE_SOON": "Due Soon",
-      "OVERDUE": "Overdue"
+      "OVERDUE": "Overdue",
+      "NONE": "Not set"
+    },
+    "empty": "No instruments found",
+    "record": "Record Result",
+    "notSet": "Not set",
+    "daysOverdue": "{days} days overdue",
+    "daysUntil": "In {days} days",
+    "today": "Today",
+    "showing": "Showing {count}",
+    "columns": {
+      "codeAndName": "Code / Name",
+      "type": "Type",
+      "calStatus": "Cal. Status",
+      "lastCalDate": "Last Cal.",
+      "nextCalDate": "Next Cal.",
+      "period": "Period (months)"
     }
   },
   "parts": {
@@ -235,7 +288,28 @@
     "stockOnHand": "Stock on Hand",
     "reorderPoint": "Reorder Point",
     "unitCost": "Unit Cost",
-    "lowStock": "Low Stock"
+    "lowStock": "Low Stock",
+    "add": "Add Part",
+    "addNew": "Add New Part",
+    "adjustStock": "Adjust Stock",
+    "empty": "No parts found",
+    "currentStock": "Current stock: {count} {unit}",
+    "adjustQty": "Adjustment quantity (+ receive / - issue) *",
+    "reason": "Reason",
+    "afterAdjust": "After: {count} {unit}",
+    "totalValue": "Total value",
+    "adjustSuccess": "Stock adjusted {delta} successfully",
+    "adjustError": "Please enter a quantity",
+    "editTitle": "Edit {code}",
+    "columns": {
+      "codeAndName": "Code / Name",
+      "partNo": "Part No.",
+      "unit": "Unit",
+      "stockOnHand": "On Hand",
+      "reorderPoint": "Reorder Pt.",
+      "unitCost": "Unit Cost",
+      "location": "Location"
+    }
   },
   "admin": {
     "title": "System Settings",

@@ -134,7 +134,21 @@
     "return": "ส่งคืน",
     "comment": "ความเห็น",
     "attachments": "ไฟล์แนบ",
-    "spareParts": "อะไหล่ที่ใช้"
+    "spareParts": "อะไหล่ที่ใช้",
+    "searchPlaceholder": "ค้นหา WO# / หัวข้อ...",
+    "empty": "ไม่พบใบสั่งซ่อม",
+    "emptyDesc": "ลองเปลี่ยนตัวกรอง หรือสร้างใบสั่งซ่อมใหม่",
+    "showing": "แสดง {count} ใบสั่งซ่อม",
+    "columns": {
+      "woNumber": "WO#",
+      "title": "หัวข้อ",
+      "asset": "อุปกรณ์",
+      "status": "สถานะ",
+      "priority": "ลำดับความสำคัญ",
+      "type": "ประเภท",
+      "assignee": "ผู้รับผิดชอบ",
+      "date": "วันที่"
+    }
   },
   "asset": {
     "title": "สินทรัพย์",
@@ -207,7 +221,30 @@
     "lastDone": "ทำล่าสุด",
     "leadTime": "แจ้งล่วงหน้า (วัน)",
     "checklist": "รายการตรวจสอบ",
-    "generateWOs": "สร้างใบสั่งซ่อม"
+    "generateWOs": "สร้างใบสั่งซ่อม",
+    "status": {
+      "overdue": "เกินกำหนด",
+      "due_soon": "ใกล้ถึงกำหนด",
+      "normal": "ปกติ"
+    },
+    "createPlan": "สร้างแผน PM",
+    "generateWOsBtn": "สร้าง WO จาก PM",
+    "empty": "ไม่พบแผน PM",
+    "intervalDays": "ทุก {days} วัน",
+    "daysOverdue": "เกินกำหนด {days} วัน",
+    "daysUntil": "อีก {days} วัน",
+    "today": "วันนี้",
+    "showing": "แสดง {count} รายการ",
+    "generateSuccess": "สร้างใบสั่งซ่อม PM สำเร็จ {created} ใบ (ข้าม {skipped})",
+    "generateError": "เกิดข้อผิดพลาด",
+    "columns": {
+      "asset": "อุปกรณ์",
+      "status": "สถานะ",
+      "frequency": "ความถี่",
+      "checklist": "Checklist",
+      "nextDue": "ถัดไป",
+      "lastDone": "ล่าสุด"
+    }
   },
   "cal": {
     "title": "สอบเทียบ",
@@ -221,7 +258,23 @@
     "status": {
       "NORMAL": "ปกติ",
       "DUE_SOON": "ใกล้ครบกำหนด",
-      "OVERDUE": "เกินกำหนด"
+      "OVERDUE": "เกินกำหนด",
+      "NONE": "ยังไม่ระบุ"
+    },
+    "empty": "ไม่พบเครื่องมือวัด",
+    "record": "บันทึกผล",
+    "notSet": "ยังไม่ระบุ",
+    "daysOverdue": "เกิน {days} วัน",
+    "daysUntil": "อีก {days} วัน",
+    "today": "วันนี้",
+    "showing": "แสดง {count} รายการ",
+    "columns": {
+      "codeAndName": "รหัส / ชื่อ",
+      "type": "ประเภท",
+      "calStatus": "สถานะสอบเทียบ",
+      "lastCalDate": "สอบเทียบล่าสุด",
+      "nextCalDate": "ครั้งถัดไป",
+      "period": "รอบ (เดือน)"
     }
   },
   "parts": {
@@ -235,7 +288,28 @@
     "stockOnHand": "คงเหลือ",
     "reorderPoint": "จุดสั่งซื้อ",
     "unitCost": "ราคาต่อหน่วย",
-    "lowStock": "สต็อกต่ำ"
+    "lowStock": "สต็อกต่ำ",
+    "add": "เพิ่มอะไหล่",
+    "addNew": "เพิ่มอะไหล่ใหม่",
+    "adjustStock": "ปรับสต็อก",
+    "empty": "ไม่พบอะไหล่",
+    "currentStock": "คงเหลือปัจจุบัน: {count} {unit}",
+    "adjustQty": "จำนวนที่ปรับ (+ รับเข้า / - จ่ายออก) *",
+    "reason": "เหตุผล",
+    "afterAdjust": "หลังปรับ: {count} {unit}",
+    "totalValue": "มูลค่ารวม",
+    "adjustSuccess": "ปรับสต็อก {delta} สำเร็จ",
+    "adjustError": "กรุณาระบุจำนวน",
+    "editTitle": "แก้ไข {code}",
+    "columns": {
+      "codeAndName": "รหัส / ชื่อ",
+      "partNo": "Part No.",
+      "unit": "หน่วย",
+      "stockOnHand": "คงเหลือ",
+      "reorderPoint": "จุดสั่งซื้อ",
+      "unitCost": "ราคา/หน่วย",
+      "location": "ที่เก็บ"
+    }
   },
   "admin": {
     "title": "ตั้งค่าระบบ",
