@@ -107,6 +107,7 @@ model Role {
   nameEn      String
   description String?
   isSystem    Boolean          @default(false)
+  isDeleted   Boolean          @default(false)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   users       User[]

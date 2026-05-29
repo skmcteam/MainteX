@@ -97,9 +97,52 @@ export async function toggleUserActive(id: string, isActive: boolean) {
 
 export async function getRoles() {
   return prisma.role.findMany({
+    where: { isDeleted: false },
     include: { _count: { select: { users: true } } },
     orderBy: { code: "asc" },
   });
+}
+
+export type RoleRow = Awaited<ReturnType<typeof getRoles>>[number];
+
+const RoleSchema = z.object({
+  code: z
+    .string()
+    .min(1, "กรุณาระบุรหัส")
+    .regex(/^[A-Z0-9_]+$/, "รหัสต้องเป็นตัวพิมพ์ใหญ่และ _ เท่านั้น"),
+  nameTh: z.string().min(1, "กรุณาระบุชื่อภาษาไทย"),
+  nameEn: z.string().min(1, "กรุณาระบุชื่อภาษาอังกฤษ"),
+  description: z.string().optional().nullable(),
+});
+
+export async function createRole(input: z.infer<typeof RoleSchema>) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const data = RoleSchema.parse(input);
+  const role = await prisma.role.create({ data: { ...data, isSystem: false } });
+  await writeAuditLog({ userId: session.user.id, entity: "Role", entityId: role.id, action: "CREATE", after: { code: data.code } });
+  revalidatePath("/admin/roles");
+  return { success: true };
+}
+
+export async function updateRole(id: string, input: Omit<z.infer<typeof RoleSchema>, "code">) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const UpdateSchema = RoleSchema.omit({ code: true });
+  const data = UpdateSchema.parse(input);
+  await prisma.role.update({ where: { id }, data });
+  await writeAuditLog({ userId: session.user.id, entity: "Role", entityId: id, action: "UPDATE", after: data });
+  revalidatePath("/admin/roles");
+  return { success: true };
+}
+
+export async function softDeleteRole(id: string) {
+  const session = await requireRole(["SYSTEM_ADMIN"]);
+  const role = await prisma.role.findUnique({ where: { id }, select: { isSystem: true, code: true } });
+  if (!role) throw new Error("ไม่พบบทบาทนี้");
+  if (role.isSystem) throw new Error("ไม่สามารถลบ System role ได้");
+  await prisma.role.update({ where: { id }, data: { isDeleted: true } });
+  await writeAuditLog({ userId: session.user.id, entity: "Role", entityId: id, action: "DELETE", after: { code: role.code } });
+  revalidatePath("/admin/roles");
+  return { success: true };
 }
 
 // ─── Departments ──────────────────────────────────────────────
