@@ -27,7 +27,7 @@ export default function WOTypesPage() {
         searchKeys={["code", "nameTh"]}
         createLabel="เพิ่มประเภท"
         columns={[
-          { key: "code", label: "รหัส", render: (r) => <span className="font-mono-num font-bold" style={{ background: `${r.color}22`, color: r.color, borderRadius: 4, padding: "2px 6px" }}>{r.code}</span> },
+          { key: "code", label: "รหัส", render: (r) => <span className="font-mono-num font-semibold" style={{ background: `${r.color}22`, color: r.color, borderRadius: 4, padding: "2px 6px" }}>{r.code}</span> },
           { key: "nameTh", label: "ชื่อภาษาไทย", render: (r) => <span style={{ color: "var(--text)" }}>{r.nameTh}</span> },
           { key: "nameEn", label: "ชื่อภาษาอังกฤษ", render: (r) => <span style={{ color: "var(--text-sub)" }}>{r.nameEn}</span> },
           { key: "sort", label: "ลำดับ", render: (r) => <span style={{ color: "var(--text-sub)" }}>{r.sortOrder}</span> },

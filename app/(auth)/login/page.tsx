@@ -57,7 +57,7 @@ export default function LoginPage() {
             className="inline-flex h-14 w-14 items-center justify-center rounded-xl mb-4"
             style={{ background: "var(--brand-soft)", border: "0.5px solid var(--brand)" }}
           >
-            <span style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-1px", lineHeight: 1, color: "var(--brand)" }}>M</span>
+            <span style={{ fontSize: "28px", fontWeight: 600, letterSpacing: "-1px", lineHeight: 1, color: "var(--brand)" }}>M</span>
           </div>
           <h1 className="text-xl font-semibold" style={{ color: "var(--text)" }}>
             MainteX

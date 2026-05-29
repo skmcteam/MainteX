@@ -81,7 +81,7 @@ export function AssetQRButton({ assetCode, assetName, assetId }: Props) {
                 />
               </div>
               <div className="text-center">
-                <p className="font-mono-num text-sm font-bold" style={{ color: "var(--text)" }}>{assetCode}</p>
+                <p className="font-mono-num text-sm font-semibold" style={{ color: "var(--text)" }}>{assetCode}</p>
                 <p className="text-xs" style={{ color: "var(--text-sub)" }}>{assetName}</p>
               </div>
               <button

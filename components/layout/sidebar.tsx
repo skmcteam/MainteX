@@ -102,7 +102,7 @@ export function Sidebar() {
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
           style={{ background: "var(--brand)", color: "var(--on-brand)" }}
         >
-          <span style={{ fontSize: "13px", fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1 }}>M</span>
+          <span style={{ fontSize: "13px", fontWeight: 600, letterSpacing: "-0.5px", lineHeight: 1 }}>M</span>
         </div>
         {!collapsed && (
           <div className="min-w-0">
