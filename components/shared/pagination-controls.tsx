@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
@@ -8,14 +9,16 @@ interface Props {
   total: number;
   pageSize: number;
   onNavigate: (page: number) => void;
-  label?: string; // e.g. "รายการ"
+  label?: string;
 }
 
-export function PaginationControls({ page, totalPages, total, pageSize, onNavigate, label = "รายการ" }: Props) {
+export function PaginationControls({ page, totalPages, total, pageSize, onNavigate, label }: Props) {
+  const t = useTranslations("common");
   if (totalPages <= 1 && total === 0) return null;
 
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
+  const resolvedLabel = label ?? t("items");
 
   return (
     <div
@@ -23,14 +26,14 @@ export function PaginationControls({ page, totalPages, total, pageSize, onNaviga
       style={{ color: "var(--text-sub)", borderTop: "0.5px solid var(--line)" }}
     >
       <span>
-        แสดง {from}–{to} จาก {total} {label}
+        {t("showing")} {from}–{to} {t("of")} {total} {resolvedLabel}
       </span>
       {totalPages > 1 && (
         <div className="flex items-center gap-1">
           <button
             onClick={() => onNavigate(page - 1)}
             disabled={page <= 1}
-            aria-label="หน้าก่อนหน้า"
+            aria-label={t("previous")}
             className="flex h-7 w-7 items-center justify-center rounded-lg disabled:opacity-40"
             style={{ border: "0.5px solid var(--line)" }}
           >
@@ -40,7 +43,7 @@ export function PaginationControls({ page, totalPages, total, pageSize, onNaviga
           <button
             onClick={() => onNavigate(page + 1)}
             disabled={page >= totalPages}
-            aria-label="หน้าถัดไป"
+            aria-label={t("next")}
             className="flex h-7 w-7 items-center justify-center rounded-lg disabled:opacity-40"
             style={{ border: "0.5px solid var(--line)" }}
           >
