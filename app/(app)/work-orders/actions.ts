@@ -13,6 +13,7 @@ import { createNotificationEvent, createDirectNotification } from "@/lib/notific
 const WO_PAGE_SIZE = 50;
 
 export async function getWorkOrders(opts?: { q?: string; page?: number; status?: string }) {
+  await requireAuth();
   const { q, page = 1, status } = opts ?? {};
   const trimmed = q?.trim();
 
@@ -82,6 +83,7 @@ export async function getWorkOrders(opts?: { q?: string; page?: number; status?:
 export type WORow = Awaited<ReturnType<typeof getWorkOrders>>["data"][number];
 
 export async function getWorkOrder(id: string) {
+  await requireAuth();
   const r = await prisma.workOrder.findUnique({
     where: { id },
     include: {
@@ -155,6 +157,7 @@ export async function getWorkOrder(id: string) {
 export type WODetail = NonNullable<Awaited<ReturnType<typeof getWorkOrder>>>;
 
 export async function getWOFormData() {
+  await requireAuth();
   const [priorities, types, assets, users, departments] = await Promise.all([
     prisma.priority.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.wOType.findMany({ orderBy: { sortOrder: "asc" } }),
@@ -337,6 +340,7 @@ export async function updateWOStatus(
 }
 
 export async function getClosureFormData() {
+  await requireAuth();
   const [failureCodes, causeCodes, actionCodes] = await Promise.all([
     prisma.failureCode.findMany({ orderBy: { code: "asc" } }),
     prisma.causeCode.findMany({ orderBy: { code: "asc" } }),
@@ -355,6 +359,7 @@ export async function updateChecklistItem(id: string, status: "PENDING" | "PASS"
 }
 
 export async function getAvailableParts() {
+  await requireAuth();
   const parts = await prisma.sparePart.findMany({
     where: { isDeleted: false },
     select: { id: true, code: true, nameTh: true, stockOnHand: true, unitCost: true, unit: { select: { code: true } } },

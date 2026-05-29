@@ -11,6 +11,7 @@ import { AssetCategory, AssetStatus } from "@prisma/client";
 const ASSET_PAGE_SIZE = 50;
 
 export async function getAssets(opts: { category: AssetCategory; q?: string; page?: number; status?: string }) {
+  await requireAuth();
   const { category, q, page = 1, status } = opts;
   const trimmed = q?.trim();
 
@@ -94,6 +95,7 @@ export async function resolveAssetCode(code: string) {
 }
 
 export async function getAsset(id: string) {
+  await requireAuth();
   const r = await prisma.asset.findUnique({
     where: { id },
     include: {
@@ -208,6 +210,7 @@ export async function getAsset(id: string) {
 export type AssetDetail = NonNullable<Awaited<ReturnType<typeof getAsset>>>;
 
 export async function getAssetFormData(category: AssetCategory) {
+  await requireAuth();
   const [assetClasses, departments, areas, instrumentTypes, calLabs] =
     await Promise.all([
       prisma.assetClass.findMany({

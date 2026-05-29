@@ -10,6 +10,7 @@ import * as bcrypt from "bcryptjs";
 // ─── Users ────────────────────────────────────────────────────
 
 export async function getUsers() {
+  await requireRole(["SYSTEM_ADMIN"]);
   const rows = await prisma.user.findMany({
     include: { role: true, department: true, section: true },
     orderBy: { nameTh: "asc" },
@@ -31,6 +32,7 @@ export async function getUsers() {
 export type UserRow = Awaited<ReturnType<typeof getUsers>>[number];
 
 export async function getUserFormData() {
+  await requireRole(["SYSTEM_ADMIN"]);
   const [roles, departments] = await Promise.all([
     prisma.role.findMany({ orderBy: { code: "asc" } }),
     prisma.department.findMany({ orderBy: { code: "asc" }, include: { sections: { orderBy: { code: "asc" } } } }),
@@ -96,6 +98,7 @@ export async function toggleUserActive(id: string, isActive: boolean) {
 // ─── Roles ────────────────────────────────────────────────────
 
 export async function getRoles() {
+  await requireRole(["SYSTEM_ADMIN"]);
   return prisma.role.findMany({
     where: { isDeleted: false },
     include: { _count: { select: { users: true } } },
@@ -148,6 +151,7 @@ export async function softDeleteRole(id: string) {
 // ─── Departments ──────────────────────────────────────────────
 
 export async function getDepartmentsAdmin() {
+  await requireRole(["SYSTEM_ADMIN"]);
   const rows = await prisma.department.findMany({
     include: {
       plant: { select: { code: true } },
@@ -213,6 +217,7 @@ export async function updateSection(id: string, input: z.infer<typeof SectionSch
 // ─── Areas ────────────────────────────────────────────────────
 
 export async function getAreas() {
+  await requireRole(["SYSTEM_ADMIN"]);
   return prisma.area.findMany({
     where: { isDeleted: false },
     include: { _count: { select: { assets: true } } },
@@ -255,6 +260,7 @@ export async function deleteArea(id: string) {
 // ─── WO Types ─────────────────────────────────────────────────
 
 export async function getWOTypesAdmin() {
+  await requireRole(["SYSTEM_ADMIN"]);
   return prisma.wOType.findMany({
     include: { _count: { select: { workOrders: true } } },
     orderBy: { sortOrder: "asc" },
@@ -290,6 +296,7 @@ export async function updateWOType(id: string, input: z.infer<typeof WOTypeSchem
 // ─── Priorities ───────────────────────────────────────────────
 
 export async function getPrioritiesAdmin() {
+  await requireRole(["SYSTEM_ADMIN"]);
   return prisma.priority.findMany({
     include: { _count: { select: { workOrders: true } } },
     orderBy: { sortOrder: "asc" },
@@ -326,6 +333,7 @@ export async function updatePriority(id: string, input: z.infer<typeof PriorityS
 // ─── Asset Classes ────────────────────────────────────────────
 
 export async function getAssetClassesAdmin() {
+  await requireRole(["SYSTEM_ADMIN"]);
   return prisma.assetClass.findMany({
     include: { _count: { select: { assets: true } } },
     orderBy: { code: "asc" },
@@ -362,6 +370,7 @@ export async function updateAssetClass(id: string, input: z.infer<typeof AssetCl
 // ─── Calibration Labs ─────────────────────────────────────────
 
 export async function getCalibrationLabsAdmin() {
+  await requireRole(["SYSTEM_ADMIN"]);
   return prisma.calibrationLab.findMany({
     include: { _count: { select: { assets: true, calibrations: true } } },
     orderBy: { code: "asc" },
@@ -399,6 +408,7 @@ export async function updateCalibrationLab(id: string, input: z.infer<typeof Cal
 // ─── Suppliers ────────────────────────────────────────────────
 
 export async function getSuppliersAdmin() {
+  await requireRole(["SYSTEM_ADMIN"]);
   return prisma.supplier.findMany({
     include: { _count: { select: { spareParts: true } } },
     orderBy: { code: "asc" },

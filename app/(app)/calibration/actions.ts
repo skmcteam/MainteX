@@ -9,6 +9,7 @@ import { createNotificationEvent } from "@/lib/notifications";
 // ─── Read ─────────────────────────────────────────────────────
 
 export async function getCalibrationAssets() {
+  await requireAuth();
   const rows = await prisma.asset.findMany({
     where: { category: "INSTRUMENT", isDeleted: false },
     include: {
@@ -102,6 +103,7 @@ export async function getCalibrationAssets() {
 export type CalRow = Awaited<ReturnType<typeof getCalibrationAssets>>[number];
 
 export async function getCalLabs() {
+  await requireAuth();
   return prisma.calibrationLab.findMany({ orderBy: { code: "asc" } });
 }
 

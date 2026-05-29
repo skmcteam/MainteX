@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 import { subMonths, format } from "date-fns";
 import { th } from "date-fns/locale";
 import { computeKPIs } from "@/lib/kpi";
@@ -8,6 +9,7 @@ import { computeKPIs } from "@/lib/kpi";
 // ─── WO count per month by type (last 12 months) ─────────────
 
 export async function getWOByMonth() {
+  await requireAuth();
   const since = subMonths(new Date(), 11);
   since.setDate(1);
   since.setHours(0, 0, 0, 0);
@@ -54,6 +56,7 @@ export async function getWOByMonth() {
 // ─── Top bad actors (assets with most WOs) ───────────────────
 
 export async function getTopBadActors() {
+  await requireAuth();
   type Row = { code: string; nameTh: string; category: string; wo_count: bigint; open_count: bigint };
   const rows = await prisma.$queryRaw<Row[]>`
     SELECT
@@ -82,6 +85,7 @@ export async function getTopBadActors() {
 // ─── Cost by department ───────────────────────────────────────
 
 export async function getCostByDepartment() {
+  await requireAuth();
   const since = subMonths(new Date(), 11);
   type Row = { dept_name: string; labor_cost: number; parts_cost: number };
   const rows = await prisma.$queryRaw<Row[]>`
@@ -107,6 +111,7 @@ export async function getCostByDepartment() {
 // ─── PM Compliance per month ──────────────────────────────────
 
 export async function getPMComplianceByMonth() {
+  await requireAuth();
   const since = subMonths(new Date(), 5);
   since.setDate(1); since.setHours(0, 0, 0, 0);
 
@@ -138,6 +143,7 @@ export async function getPMComplianceByMonth() {
 // ─── Calibration summary ──────────────────────────────────────
 
 export async function getCalibrationSummary() {
+  await requireAuth();
   const now = new Date();
   const soon = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -165,6 +171,7 @@ export async function getCalibrationSummary() {
 // ─── Overall KPI summary ──────────────────────────────────────
 
 export async function getReportKPIs() {
+  await requireAuth();
   const since = subMonths(new Date(), 1);
 
   const [totalWOs, openWOs, doneWOs, activeAssets, lowStockParts, closedCMs] = await Promise.all([

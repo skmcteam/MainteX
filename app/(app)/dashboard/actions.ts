@@ -1,10 +1,12 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 import { computeKPIs } from "@/lib/kpi";
 import { subDays } from "date-fns";
 
 export async function getDashboardStats() {
+  await requireAuth();
   const [
     openWOs,
     urgentWOs,

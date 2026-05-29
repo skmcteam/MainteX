@@ -30,6 +30,7 @@ function serializePart(r: {
 }
 
 export async function getSpareParts(opts?: { q?: string; page?: number }) {
+  await requireAuth();
   const { q, page = 1 } = opts ?? {};
   const where = {
     isDeleted: false,
@@ -63,6 +64,7 @@ export type SparePartRow = Awaited<ReturnType<typeof getSpareParts>>["data"][num
 
 // Cross-field comparison (stockOnHand <= reorderPoint) requires raw SQL
 export async function getLowStockParts() {
+  await requireAuth();
   type RawRow = { id: string; code: string; nameTh: string; nameEn: string; partNumber: string | null; stockOnHand: number; reorderPoint: number; unitCost: number | null; shelfLocation: string | null; description: string | null };
   const rows = await prisma.$queryRaw<RawRow[]>`
     SELECT sp.id, sp.code, sp."nameTh", sp."nameEn", sp."partNumber",
@@ -76,6 +78,7 @@ export async function getLowStockParts() {
 }
 
 export async function getLowStockCount() {
+  await requireAuth();
   const result = await prisma.$queryRaw<[{ count: bigint }]>`
     SELECT COUNT(*) FROM "SparePart" WHERE "isDeleted" = false AND "stockOnHand" <= "reorderPoint"
   `;
@@ -83,6 +86,7 @@ export async function getLowStockCount() {
 }
 
 export async function getPartsFormData() {
+  await requireAuth();
   const [units, suppliers, warehouses] = await Promise.all([
     prisma.unitOfMeasure.findMany({ orderBy: { code: "asc" } }),
     prisma.supplier.findMany({ where: { isActive: true }, orderBy: { code: "asc" } }),

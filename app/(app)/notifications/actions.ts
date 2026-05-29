@@ -1,12 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { auth, requireAuth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 export async function getMyNotifications() {
-  const session = await auth();
-  if (!session?.user?.id) return [];
+  const session = await requireAuth();
 
   const rows = await prisma.notification.findMany({
     where: { userId: session.user.id },

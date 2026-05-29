@@ -9,6 +9,7 @@ import { createNotificationEvent } from "@/lib/notifications";
 // ─── Read ─────────────────────────────────────────────────────
 
 export async function getPMPlans() {
+  await requireAuth();
   const rows = await prisma.pMPlan.findMany({
     where: { isActive: true, isDeleted: false },
     include: {
@@ -43,6 +44,7 @@ export async function getPMPlans() {
 export type PMRow = Awaited<ReturnType<typeof getPMPlans>>[number];
 
 export async function getPMFormData() {
+  await requireAuth();
   const [assets, frequencies, templates, users] = await Promise.all([
     prisma.asset.findMany({
       where: { status: "ACTIVE", isDeleted: false },
