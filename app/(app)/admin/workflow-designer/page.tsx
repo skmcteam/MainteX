@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getWorkflows, getRoles } from "./actions";
 import { WorkflowDesignerClient } from "@/components/admin/workflow-designer-client";
 import { Construction } from "lucide-react";
@@ -5,6 +6,7 @@ import { Construction } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function WorkflowDesignerPage() {
+  const t = await getTranslations("admin.workflowDesigner");
   const [workflows, roles] = await Promise.all([getWorkflows(), getRoles()]);
   return (
     <div className="flex flex-col gap-4">
@@ -13,7 +15,7 @@ export default async function WorkflowDesignerPage() {
           Workflow Designer
         </h1>
         <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>
-          ออกแบบขั้นตอนการอนุมัติสำหรับใบสั่งซ่อม
+          {t("subtitle")}
         </p>
       </div>
 
@@ -24,11 +26,8 @@ export default async function WorkflowDesignerPage() {
       >
         <Construction size={16} className="mt-0.5 shrink-0" />
         <div>
-          <p className="font-semibold">Phase 5 — Approval Engine กำลังพัฒนา</p>
-          <p className="mt-0.5 text-xs" style={{ opacity: 0.85 }}>
-            Designer ใช้ตั้งค่าและบันทึก Workflow ได้ตามปกติ แต่ยังไม่ผูกกับใบสั่งซ่อม (WO) จริง
-            — ใบสั่งซ่อมที่สร้างขึ้นยังข้ามขั้นตอน Approval ไปก่อน
-          </p>
+          <p className="font-semibold">{t("bannerTitle")}</p>
+          <p className="mt-0.5 text-xs" style={{ opacity: 0.85 }}>{t("bannerBody")}</p>
         </div>
       </div>
 

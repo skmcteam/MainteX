@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getSpareParts, getLowStockParts, getLowStockCount, getPartsFormData } from "./actions";
 import { PartsClient } from "@/components/spare-parts/parts-client";
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default async function SparePartsPage({ searchParams }: Props) {
+  const t = await getTranslations();
   const params = await searchParams;
   const q = params.q ?? "";
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
@@ -25,11 +27,11 @@ export default async function SparePartsPage({ searchParams }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>อะไหล่</h1>
+        <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>{t("parts.title")}</h1>
         <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>
-          คลังอะไหล่ · {result ? result.total : lowStockCount} รายการ
+          {t("parts.inventorySubtitle", { count: result ? result.total : lowStockCount })}
           {lowStockCount > 0 && tab !== "low" && (
-            <span style={{ color: "var(--danger)" }}> · สต็อกต่ำ {lowStockCount} รายการ</span>
+            <span style={{ color: "var(--danger)" }}>{t("parts.lowStockCount", { count: lowStockCount })}</span>
           )}
         </p>
       </div>

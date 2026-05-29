@@ -62,7 +62,13 @@
     "to": "ถึง",
     "sortBy": "เรียงตาม",
     "ascending": "น้อยไปมาก",
-    "descending": "มากไปน้อย"
+    "descending": "มากไปน้อย",
+    "error": {
+      "title": "เกิดข้อผิดพลาด",
+      "message": "ไม่สามารถโหลดข้อมูลได้",
+      "retry": "ลองใหม่"
+    },
+    "items": "รายการ"
   },
   "auth": {
     "login": "เข้าสู่ระบบ",
@@ -140,6 +146,45 @@
     "attachments": "ไฟล์แนบ",
     "spareParts": "อะไหล่ที่ใช้",
     "subtitle": "ระบบบริหารจัดการใบสั่งซ่อมบำรุง · {count} รายการ",
+    "meta": {
+      "asset": "อุปกรณ์",
+      "department": "แผนก",
+      "assignee": "ผู้รับผิดชอบ",
+      "reporter": "ผู้แจ้ง",
+      "openedAt": "วันที่เปิด",
+      "startedAt": "เริ่มดำเนินการ",
+      "completedAt": "เสร็จสิ้น",
+      "duration": "ระยะเวลา",
+      "unassigned": "ยังไม่ระบุ"
+    },
+    "duration": {
+      "hoursMinutes": "{hours} ชม. {minutes} นาที",
+      "minutesOnly": "{minutes} นาที"
+    },
+    "section": {
+      "approval": "การอนุมัติ",
+      "cost": "สรุปต้นทุน",
+      "failureCodes": "รหัสความเสียหาย",
+      "notes": "หมายเหตุ"
+    },
+    "cost": {
+      "labor": "ค่าแรง",
+      "parts": "ค่าอะไหล่",
+      "total": "รวม",
+      "laborHours": "ชั่วโมงแรงงาน",
+      "laborHoursValue": "{hours} ชม."
+    },
+    "approval": {
+      "step": "ขั้นที่ {number}",
+      "unassigned": "ยังไม่ระบุผู้อนุมัติ",
+      "pending": "รอการอนุมัติ",
+      "skipped": "ข้าม"
+    },
+    "failure": {
+      "label": "รหัสความเสีย",
+      "cause": "สาเหตุ",
+      "action": "การแก้ไข"
+    },
     "searchPlaceholder": "ค้นหา WO# / หัวข้อ...",
     "empty": "ไม่พบใบสั่งซ่อม",
     "emptyDesc": "ลองเปลี่ยนตัวกรอง หรือสร้างใบสั่งซ่อมใหม่",
@@ -179,6 +224,12 @@
     "serialNumber": "หมายเลขซีเรียล",
     "purchaseDate": "วันที่ซื้อ",
     "qrCode": "QR Code",
+    "registry": {
+      "MACHINE": "ทะเบียนเครื่องจักรทั้งหมด · {count} รายการ",
+      "MOLD": "ทะเบียนแม่พิมพ์ทั้งหมด · {count} รายการ",
+      "IT": "ทะเบียนอุปกรณ์ไอทีทั้งหมด · {count} รายการ",
+      "INSTRUMENT": "ทะเบียนเครื่องมือวัดและสอบเทียบ · {count} รายการ"
+    },
     "showQR": "แสดง QR",
     "printQR": "พิมพ์ QR",
     "history": "ประวัติ",
@@ -227,6 +278,9 @@
     "leadTime": "แจ้งล่วงหน้า (วัน)",
     "checklist": "รายการตรวจสอบ",
     "generateWOs": "สร้างใบสั่งซ่อม",
+    "pageTitle": "แผนบำรุงรักษาเชิงป้องกัน (PM)",
+    "subtitle": "แผน PM ทั้งหมด {count} รายการ",
+    "overdueAlert": " · เกินกำหนด {count} รายการ",
     "status": {
       "overdue": "เกินกำหนด",
       "due_soon": "ใกล้ถึงกำหนด",
@@ -294,6 +348,8 @@
     "reorderPoint": "จุดสั่งซื้อ",
     "unitCost": "ราคาต่อหน่วย",
     "lowStock": "สต็อกต่ำ",
+    "inventorySubtitle": "คลังอะไหล่ · {count} รายการ",
+    "lowStockCount": " · สต็อกต่ำ {count} รายการ",
     "add": "เพิ่มอะไหล่",
     "addNew": "เพิ่มอะไหล่ใหม่",
     "adjustStock": "ปรับสต็อก",
@@ -331,7 +387,12 @@
     "checklistTemplates": "แม่แบบรายการตรวจสอบ",
     "calibrationLabs": "ห้องปฏิบัติการ",
     "suppliers": "ผู้จำหน่าย",
-    "notificationRules": "กฎการแจ้งเตือน"
+    "notificationRules": "กฎการแจ้งเตือน",
+    "workflowDesigner": {
+      "subtitle": "ออกแบบขั้นตอนการอนุมัติสำหรับใบสั่งซ่อม",
+      "bannerTitle": "Phase 5 — Approval Engine กำลังพัฒนา",
+      "bannerBody": "Designer ใช้ตั้งค่าและบันทึก Workflow ได้ตามปกติ แต่ยังไม่ผูกกับใบสั่งซ่อม (WO) จริง — ใบสั่งซ่อมที่สร้างขึ้นยังข้ามขั้นตอน Approval ไปก่อน"
+    }
   },
   "notifications": {
     "title": "การแจ้งเตือน",

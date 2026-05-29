@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import {
   ChevronLeft,
   ClipboardList,
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default async function WorkOrderDetailPage({ params }: Props) {
+  const t = await getTranslations("wo");
   const { id } = await params;
   const [wo, availableParts] = await Promise.all([
     getWorkOrder(id),
@@ -34,6 +36,19 @@ export default async function WorkOrderDetailPage({ params }: Props) {
       ? Math.round((new Date(wo.endTime).getTime() - new Date(wo.startTime).getTime()) / 60000)
       : null;
 
+  const durationLabel = durationMinutes != null
+    ? durationMinutes >= 60
+      ? t("duration.hoursMinutes", { hours: Math.floor(durationMinutes / 60), minutes: durationMinutes % 60 })
+      : t("duration.minutesOnly", { minutes: durationMinutes })
+    : "-";
+
+  const approvalActionLabel = (action: string) => {
+    if (action === "APPROVED") return t("approve");
+    if (action === "REJECTED") return t("reject");
+    if (action === "RETURNED") return t("return");
+    return t("approval.skipped");
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {/* Breadcrumb */}
@@ -44,7 +59,7 @@ export default async function WorkOrderDetailPage({ params }: Props) {
           style={{ color: "var(--text-sub)" }}
         >
           <ChevronLeft size={14} />
-          ใบสั่งซ่อม
+          {t("title")}
         </Link>
         <span className="text-xs" style={{ color: "var(--text-sub)" }}>/</span>
         <span className="text-xs font-medium font-mono-num" style={{ color: "var(--text)" }}>
@@ -88,23 +103,14 @@ export default async function WorkOrderDetailPage({ params }: Props) {
           className="mt-4 grid grid-cols-2 gap-4 border-t pt-4 sm:grid-cols-4"
           style={{ borderColor: "var(--line)" }}
         >
-          <Meta label="อุปกรณ์" value={`${wo.asset.code} · ${wo.asset.nameTh}`} />
-          <Meta label="แผนก" value={wo.department?.nameTh ?? "-"} />
-          <Meta label="ผู้รับผิดชอบ" value={wo.assignee?.nameTh ?? "ยังไม่ระบุ"} />
-          <Meta label="ผู้แจ้ง" value={wo.creator.nameTh} />
-          <Meta label="วันที่เปิด" value={formatDateTime(wo.createdAt)} />
-          <Meta label="เริ่มดำเนินการ" value={formatDateTime(wo.startTime)} />
-          <Meta label="เสร็จสิ้น" value={formatDateTime(wo.endTime)} />
-          <Meta
-            label="ระยะเวลา"
-            value={
-              durationMinutes != null
-                ? durationMinutes >= 60
-                  ? `${Math.floor(durationMinutes / 60)} ชม. ${durationMinutes % 60} นาที`
-                  : `${durationMinutes} นาที`
-                : "-"
-            }
-          />
+          <Meta label={t("meta.asset")} value={`${wo.asset.code} · ${wo.asset.nameTh}`} />
+          <Meta label={t("meta.department")} value={wo.department?.nameTh ?? "-"} />
+          <Meta label={t("meta.assignee")} value={wo.assignee?.nameTh ?? t("meta.unassigned")} />
+          <Meta label={t("meta.reporter")} value={wo.creator.nameTh} />
+          <Meta label={t("meta.openedAt")} value={formatDateTime(wo.createdAt)} />
+          <Meta label={t("meta.startedAt")} value={formatDateTime(wo.startTime)} />
+          <Meta label={t("meta.completedAt")} value={formatDateTime(wo.endTime)} />
+          <Meta label={t("meta.duration")} value={durationLabel} />
         </div>
       </div>
 
@@ -117,7 +123,7 @@ export default async function WorkOrderDetailPage({ params }: Props) {
             <WOChecklist woId={wo.id} items={wo.checklistItems} />
           )}
 
-          {/* Parts used — interactive panel */}
+          {/* Parts used */}
           <WOPartsPanel
             woId={wo.id}
             parts={wo.parts}
@@ -127,7 +133,7 @@ export default async function WorkOrderDetailPage({ params }: Props) {
 
           {/* Approvals */}
           {wo.approvals.length > 0 && (
-            <Section icon={User} title="การอนุมัติ">
+            <Section icon={User} title={t("section.approval")}>
               <div className="flex flex-col gap-2">
                 {wo.approvals.map((ap) => (
                   <div
@@ -137,10 +143,10 @@ export default async function WorkOrderDetailPage({ params }: Props) {
                   >
                     <div>
                       <p className="text-xs font-medium" style={{ color: "var(--text)" }}>
-                        {ap.stepNameTh} (ขั้นที่ {ap.stepNumber})
+                        {ap.stepNameTh} ({t("approval.step", { number: ap.stepNumber })})
                       </p>
                       <p className="text-xs" style={{ color: "var(--text-sub)" }}>
-                        {ap.user?.nameTh ?? "ยังไม่ระบุผู้อนุมัติ"}
+                        {ap.user?.nameTh ?? t("approval.unassigned")}
                       </p>
                     </div>
                     <div className="text-right">
@@ -148,34 +154,18 @@ export default async function WorkOrderDetailPage({ params }: Props) {
                         <span
                           className="rounded-full px-2 py-0.5 text-[10px] font-medium"
                           style={{
-                            background:
-                              ap.action === "APPROVED"
-                                ? "var(--success-soft)"
-                                : ap.action === "REJECTED"
-                                ? "var(--danger-soft)"
-                                : "var(--warning-soft)",
-                            color:
-                              ap.action === "APPROVED"
-                                ? "var(--success)"
-                                : ap.action === "REJECTED"
-                                ? "var(--danger)"
-                                : "var(--warning)",
+                            background: ap.action === "APPROVED" ? "var(--success-soft)" : ap.action === "REJECTED" ? "var(--danger-soft)" : "var(--warning-soft)",
+                            color: ap.action === "APPROVED" ? "var(--success)" : ap.action === "REJECTED" ? "var(--danger)" : "var(--warning)",
                           }}
                         >
-                          {ap.action === "APPROVED"
-                            ? "อนุมัติ"
-                            : ap.action === "REJECTED"
-                            ? "ไม่อนุมัติ"
-                            : ap.action === "RETURNED"
-                            ? "ส่งคืน"
-                            : "ข้าม"}
+                          {approvalActionLabel(ap.action)}
                         </span>
                       ) : (
                         <span
                           className="rounded-full px-2 py-0.5 text-[10px] font-medium"
                           style={{ background: "var(--panel-2)", color: "var(--text-sub)" }}
                         >
-                          รอการอนุมัติ
+                          {t("approval.pending")}
                         </span>
                       )}
                       {ap.actedAt && (
@@ -194,17 +184,17 @@ export default async function WorkOrderDetailPage({ params }: Props) {
         {/* Right sidebar */}
         <div className="flex flex-col gap-4">
           {/* Cost summary */}
-          <Section icon={Clock} title="สรุปต้นทุน">
+          <Section icon={Clock} title={t("section.cost")}>
             <div className="flex flex-col gap-2">
-              <CostRow label="ค่าแรง" value={formatCurrency(wo.laborCost)} />
-              <CostRow label="ค่าอะไหล่" value={formatCurrency(wo.totalPartsCost)} />
+              <CostRow label={t("cost.labor")} value={formatCurrency(wo.laborCost)} />
+              <CostRow label={t("cost.parts")} value={formatCurrency(wo.totalPartsCost)} />
               {wo.laborCost != null || wo.totalPartsCost != null ? (
                 <div
                   className="flex justify-between pt-2"
                   style={{ borderTop: "0.5px solid var(--line)" }}
                 >
                   <span className="text-xs font-semibold" style={{ color: "var(--text)" }}>
-                    รวม
+                    {t("cost.total")}
                   </span>
                   <span className="text-xs font-semibold" style={{ color: "var(--brand)" }}>
                     {formatCurrency((wo.laborCost ?? 0) + (wo.totalPartsCost ?? 0))}
@@ -212,29 +202,29 @@ export default async function WorkOrderDetailPage({ params }: Props) {
                 </div>
               ) : null}
               {wo.laborHours != null && (
-                <CostRow label="ชั่วโมงแรงงาน" value={`${wo.laborHours} ชม.`} />
+                <CostRow label={t("cost.laborHours")} value={t("cost.laborHoursValue", { hours: wo.laborHours })} />
               )}
             </div>
           </Section>
 
           {/* Failure codes */}
           {(wo.failureCode || wo.causeCode || wo.actionCode) && (
-            <Section icon={Wrench} title="รหัสความเสียหาย">
+            <Section icon={Wrench} title={t("section.failureCodes")}>
               {wo.failureCode && (
-                <CostRow label="รหัสความเสีย" value={`${wo.failureCode.code} — ${wo.failureCode.nameTh}`} />
+                <CostRow label={t("failure.label")} value={`${wo.failureCode.code} — ${wo.failureCode.nameTh}`} />
               )}
               {wo.causeCode && (
-                <CostRow label="สาเหตุ" value={`${wo.causeCode.code} — ${wo.causeCode.nameTh}`} />
+                <CostRow label={t("failure.cause")} value={`${wo.causeCode.code} — ${wo.causeCode.nameTh}`} />
               )}
               {wo.actionCode && (
-                <CostRow label="การแก้ไข" value={`${wo.actionCode.code} — ${wo.actionCode.nameTh}`} />
+                <CostRow label={t("failure.action")} value={`${wo.actionCode.code} — ${wo.actionCode.nameTh}`} />
               )}
             </Section>
           )}
 
           {/* Notes */}
           {wo.notes && (
-            <Section icon={ClipboardList} title="หมายเหตุ">
+            <Section icon={ClipboardList} title={t("section.notes")}>
               <p className="text-xs" style={{ color: "var(--text-sub)" }}>
                 {wo.notes}
               </p>
@@ -274,12 +264,8 @@ function Section({
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs" style={{ color: "var(--text-sub)" }}>
-        {label}
-      </p>
-      <p className="mt-0.5 text-xs font-medium" style={{ color: "var(--text)" }}>
-        {value}
-      </p>
+      <p className="text-xs" style={{ color: "var(--text-sub)" }}>{label}</p>
+      <p className="mt-0.5 text-xs font-medium" style={{ color: "var(--text)" }}>{value}</p>
     </div>
   );
 }
@@ -287,12 +273,8 @@ function Meta({ label, value }: { label: string; value: string }) {
 function CostRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs" style={{ color: "var(--text-sub)" }}>
-        {label}
-      </span>
-      <span className="text-xs font-medium" style={{ color: "var(--text)" }}>
-        {value}
-      </span>
+      <span className="text-xs" style={{ color: "var(--text-sub)" }}>{label}</span>
+      <span className="text-xs font-medium" style={{ color: "var(--text)" }}>{value}</span>
     </div>
   );
 }

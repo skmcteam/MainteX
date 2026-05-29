@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getAssets, getAssetFormData } from "@/app/(app)/assets/actions";
 import { AssetTable } from "@/components/assets/asset-table";
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default async function ITPage({ searchParams }: Props) {
+  const t = await getTranslations();
   const params = await searchParams;
   const q = params.q ?? "";
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
@@ -23,10 +25,10 @@ export default async function ITPage({ searchParams }: Props) {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>
-          อุปกรณ์ไอที
+          {t("asset.category.IT")}
         </h1>
         <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>
-          ทะเบียนอุปกรณ์ไอทีทั้งหมด · {result.statusCounts.all} รายการ
+          {t("asset.registry.IT", { count: result.statusCounts.all })}
         </p>
       </div>
       <AssetTable

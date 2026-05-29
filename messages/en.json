@@ -62,7 +62,13 @@
     "to": "to",
     "sortBy": "Sort by",
     "ascending": "Ascending",
-    "descending": "Descending"
+    "descending": "Descending",
+    "error": {
+      "title": "Something went wrong",
+      "message": "Unable to load data",
+      "retry": "Try Again"
+    },
+    "items": "items"
   },
   "auth": {
     "login": "Sign In",
@@ -140,6 +146,45 @@
     "attachments": "Attachments",
     "spareParts": "Parts Used",
     "subtitle": "Work Order Management · {count} records",
+    "meta": {
+      "asset": "Asset",
+      "department": "Department",
+      "assignee": "Assignee",
+      "reporter": "Reporter",
+      "openedAt": "Opened",
+      "startedAt": "Started",
+      "completedAt": "Completed",
+      "duration": "Duration",
+      "unassigned": "Unassigned"
+    },
+    "duration": {
+      "hoursMinutes": "{hours}h {minutes}m",
+      "minutesOnly": "{minutes}m"
+    },
+    "section": {
+      "approval": "Approval",
+      "cost": "Cost Summary",
+      "failureCodes": "Failure Codes",
+      "notes": "Notes"
+    },
+    "cost": {
+      "labor": "Labor Cost",
+      "parts": "Parts Cost",
+      "total": "Total",
+      "laborHours": "Labor Hours",
+      "laborHoursValue": "{hours} hrs"
+    },
+    "approval": {
+      "step": "Step {number}",
+      "unassigned": "No approver assigned",
+      "pending": "Pending Approval",
+      "skipped": "Skipped"
+    },
+    "failure": {
+      "label": "Failure Code",
+      "cause": "Cause",
+      "action": "Corrective Action"
+    },
     "searchPlaceholder": "Search WO# / Title...",
     "empty": "No work orders found",
     "emptyDesc": "Try changing filters or create a new work order",
@@ -179,6 +224,12 @@
     "serialNumber": "Serial Number",
     "purchaseDate": "Purchase Date",
     "qrCode": "QR Code",
+    "registry": {
+      "MACHINE": "All Machines · {count} records",
+      "MOLD": "All Molds & Jigs · {count} records",
+      "IT": "All IT Assets · {count} records",
+      "INSTRUMENT": "All Instruments & Calibration · {count} records"
+    },
     "showQR": "Show QR",
     "printQR": "Print QR",
     "history": "History",
@@ -227,6 +278,9 @@
     "leadTime": "Lead Time (days)",
     "checklist": "Checklist",
     "generateWOs": "Generate WOs",
+    "pageTitle": "Preventive Maintenance (PM)",
+    "subtitle": "PM Plans · {count} total",
+    "overdueAlert": " · Overdue {count}",
     "status": {
       "overdue": "Overdue",
       "due_soon": "Due Soon",
@@ -294,6 +348,8 @@
     "reorderPoint": "Reorder Point",
     "unitCost": "Unit Cost",
     "lowStock": "Low Stock",
+    "inventorySubtitle": "Inventory · {count} items",
+    "lowStockCount": " · Low stock {count} items",
     "add": "Add Part",
     "addNew": "Add New Part",
     "adjustStock": "Adjust Stock",
@@ -331,7 +387,12 @@
     "checklistTemplates": "Checklist Templates",
     "calibrationLabs": "Cal. Laboratories",
     "suppliers": "Suppliers",
-    "notificationRules": "Notification Rules"
+    "notificationRules": "Notification Rules",
+    "workflowDesigner": {
+      "subtitle": "Design approval steps for work orders",
+      "bannerTitle": "Phase 5 — Approval Engine in Development",
+      "bannerBody": "The Designer can configure and save Workflows, but they are not yet connected to Work Orders — WOs created now skip the Approval step."
+    }
   },
   "notifications": {
     "title": "Notifications",
