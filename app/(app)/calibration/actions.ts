@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth, writeAuditLog } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { createNotificationEvent } from "@/lib/notifications";
 
 // ─── Read ─────────────────────────────────────────────────────
 
@@ -41,7 +42,7 @@ export async function getCalibrationAssets() {
     return "NORMAL";
   }
 
-  return rows.map((r) => ({
+  const result = rows.map((r) => ({
     id: r.id,
     code: r.code,
     nameTh: r.nameTh,
@@ -65,6 +66,37 @@ export async function getCalibrationAssets() {
         }
       : null,
   }));
+
+  // Fire deduped DUE_SOON notifications (one per asset per 24 h)
+  const dueSoonRows = rows.filter((r) => computeCalStatus(r.nextCalDate) === "DUE_SOON");
+  if (dueSoonRows.length > 0) {
+    try {
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentNotifs = await prisma.notification.findMany({
+        where: { type: "CAL_DUE", createdAt: { gte: cutoff } },
+        select: { bodyTh: true },
+      });
+      const recentCodes = new Set(recentNotifs.map((n) => n.bodyTh?.split(" ")[0] ?? ""));
+
+      for (const r of dueSoonRows) {
+        if (!recentCodes.has(r.code)) {
+          const dueDateTh = r.nextCalDate?.toLocaleDateString("th-TH") ?? "";
+          const dueDateEn = r.nextCalDate?.toLocaleDateString("en-US") ?? "";
+          await createNotificationEvent({
+            event: "calibration_due_soon",
+            type: "CAL_DUE",
+            titleTh: "อุปกรณ์ใกล้ครบกำหนดสอบเทียบ",
+            titleEn: "Calibration due soon",
+            bodyTh: `${r.code} ${r.nameTh} ครบกำหนด ${dueDateTh}`,
+            bodyEn: `${r.code} ${r.nameEn ?? r.nameTh} due on ${dueDateEn}`,
+            link: "/calibration",
+          });
+        }
+      }
+    } catch {}
+  }
+
+  return result;
 }
 
 export type CalRow = Awaited<ReturnType<typeof getCalibrationAssets>>[number];

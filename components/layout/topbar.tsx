@@ -9,6 +9,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { LanguageSwitcher } from "./language-switcher";
 import { useNotificationStore } from "@/store/notifications";
 import { useSidebar } from "@/store/sidebar";
+import { getUnreadCount } from "@/app/(app)/notifications/actions";
 
 interface TopbarProps {
   userNameTh?: string;
@@ -26,6 +27,14 @@ export function Topbar({ userNameTh, userNameEn, userRole, userEmail, initialUnr
   useEffect(() => {
     setUnreadCount(initialUnreadCount);
   }, [initialUnreadCount, setUnreadCount]);
+
+  useEffect(() => {
+    const id = setInterval(async () => {
+      const count = await getUnreadCount();
+      setUnreadCount(count);
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [setUnreadCount]);
 
   const unread = unreadCount;
   const [menuOpen, setMenuOpen] = useState(false);

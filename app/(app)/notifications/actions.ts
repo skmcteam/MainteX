@@ -42,6 +42,12 @@ export async function markNotificationRead(id: string) {
   return { success: true };
 }
 
+export async function getUnreadCount(): Promise<number> {
+  const session = await auth();
+  if (!session?.user?.id) return 0;
+  return prisma.notification.count({ where: { userId: session.user.id, isRead: false } });
+}
+
 export async function markAllNotificationsRead() {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");

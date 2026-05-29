@@ -462,6 +462,10 @@
     "title": "Notifications",
     "markAllRead": "Mark All Read",
     "noNotifications": "No notifications",
+    "newWO": "New work order assigned to you",
+    "woOnHold": "Work order on hold",
+    "woDone": "Work order completed",
+    "calDueSoon": "Calibration due soon",
     "types": {
       "URGENT_WO": "Urgent Work Order",
       "PM_DUE": "PM Due Soon",

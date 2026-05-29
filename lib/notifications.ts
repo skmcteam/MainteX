@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
 
+// Send to all users matching a NotificationRule event (role-based audience)
 export async function createNotificationEvent({
   event,
   type,
@@ -51,6 +52,42 @@ export async function createNotificationEvent({
         link: link ?? null,
         isRead: false,
       })),
+    });
+  } catch {
+    // Notification failures must never break the calling mutation
+  }
+}
+
+// Send to a specific user directly (for assignee, creator notifications)
+export async function createDirectNotification({
+  userId,
+  type,
+  titleTh,
+  titleEn,
+  bodyTh,
+  bodyEn,
+  link,
+}: {
+  userId: string;
+  type: NotificationType;
+  titleTh: string;
+  titleEn: string;
+  bodyTh?: string;
+  bodyEn?: string;
+  link?: string;
+}) {
+  try {
+    await prisma.notification.create({
+      data: {
+        userId,
+        type,
+        titleTh,
+        titleEn,
+        bodyTh: bodyTh ?? null,
+        bodyEn: bodyEn ?? null,
+        link: link ?? null,
+        isRead: false,
+      },
     });
   } catch {
     // Notification failures must never break the calling mutation

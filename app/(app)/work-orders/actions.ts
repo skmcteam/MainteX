@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { WOStatus } from "@prisma/client";
 import { generateWONumber } from "@/lib/utils";
-import { createNotificationEvent } from "@/lib/notifications";
+import { createNotificationEvent, createDirectNotification } from "@/lib/notifications";
 
 // ─── Read ─────────────────────────────────────────────────────
 
@@ -254,6 +254,21 @@ export async function createWorkOrder(input: z.infer<typeof WOCreateSchema>) {
     });
   }
 
+  // Notify assignee directly (wrapped separately so it never fails the mutation)
+  if (data.assigneeId) {
+    try {
+      await createDirectNotification({
+        userId: data.assigneeId,
+        type: "SYSTEM",
+        titleTh: "งานใหม่มอบหมายให้คุณ",
+        titleEn: "New work order assigned to you",
+        bodyTh: `${woNumber} ${data.title}`,
+        bodyEn: `${woNumber} ${data.title}`,
+        link: `/work-orders/${wo.id}`,
+      });
+    } catch {}
+  }
+
   return { success: true, id: wo.id };
 }
 
@@ -291,6 +306,32 @@ export async function updateWOStatus(
   });
   revalidatePath("/work-orders");
   revalidatePath(`/work-orders/${id}`);
+
+  // Notify creator on ON_HOLD or DONE (wrapped separately so it never fails the mutation)
+  if (status === "ON_HOLD" || status === "DONE") {
+    try {
+      const wo = await prisma.workOrder.findUnique({
+        where: { id },
+        select: { woNumber: true, title: true, creatorId: true },
+      });
+      if (wo?.creatorId) {
+        await createDirectNotification({
+          userId: wo.creatorId,
+          type: "SYSTEM",
+          titleTh: status === "ON_HOLD" ? "งานถูก Hold" : "งานเสร็จสิ้น",
+          titleEn: status === "ON_HOLD" ? "Work order on hold" : "Work order completed",
+          bodyTh: status === "ON_HOLD"
+            ? `${wo.woNumber} รออะไหล่หรือเงื่อนไขบางอย่าง`
+            : `${wo.woNumber} ปิดงานแล้ว`,
+          bodyEn: status === "ON_HOLD"
+            ? `${wo.woNumber} is waiting for parts or conditions`
+            : `${wo.woNumber} has been completed`,
+          link: `/work-orders/${id}`,
+        });
+      }
+    } catch {}
+  }
+
   return { success: true };
 }
 
