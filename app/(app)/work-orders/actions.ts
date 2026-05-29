@@ -198,10 +198,11 @@ export async function createWorkOrder(input: z.infer<typeof WOCreateSchema>) {
 
   const data = WOCreateSchema.parse(input);
 
-  const seriesCheck = await prisma.wONumberSeries.findFirst();
-  if (!seriesCheck) {
-    await prisma.wONumberSeries.create({ data: { pattern: "WO-{YY}{MM}-{####}", lastNumber: 0 } });
-  }
+  await prisma.wONumberSeries.upsert({
+    where: { pattern: "WO-{YY}{MM}-{####}" },
+    create: { pattern: "WO-{YY}{MM}-{####}", lastNumber: 0 },
+    update: {},
+  });
   const updated = await prisma.$queryRaw<{ lastNumber: number; pattern: string }[]>`
     UPDATE "WONumberSeries"
     SET "lastNumber" = "lastNumber" + 1, "updatedAt" = NOW()
