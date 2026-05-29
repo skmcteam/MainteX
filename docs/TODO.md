@@ -1,6 +1,20 @@
 # TODO — MainteX
 
-> Prioritized backlog as of 2026-05-28. Phase 3 is next.
+> Updated 2026-05-29. Phases 1–4 complete. Phase 5 = Workflow Engine.
+
+---
+
+## Polish backlog (batch ถัดไป — low priority)
+
+Items from code review — defer until system is stable in production:
+
+| Item | File | Note |
+|------|------|------|
+| `font-weight: 800` on logo M | `components/layout/sidebar.tsx:105`, `app/(auth)/login/page.tsx:60` | Font only loads 300–600; browser synthesizes 800. Either load weight 800 or drop to 600. |
+| `font-bold` (700) in 2 spots | `components/assets/asset-qr-button.tsx:84`, `app/(app)/admin/wo-types/page.tsx:30` | Violates ≤600 design rule. Change to `font-semibold`. |
+| Google Fonts CSS `@import` (render-blocking) | `app/globals.css:2` | Migrate to `next/font/google` for self-hosting + no render-block. |
+| `: any` in QR scanner | `components/scan/qr-scanner.tsx:22` | `html5-qrcode` has no types. Narrow with local interface or `import type`. |
+| Unit tests for `lib/kpi.ts` | — | `vitest` installed but zero test files. Pure functions are ideal test targets. |
 
 ---
 
