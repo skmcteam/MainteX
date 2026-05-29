@@ -90,7 +90,7 @@ export function QRScanner() {
           className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-all"
           style={{
             background: mode === "camera" ? "var(--brand)" : "var(--panel-2)",
-            color: mode === "camera" ? "#fff" : "var(--text-sub)",
+            color: mode === "camera" ? "var(--on-brand)" : "var(--text-sub)",
             border: "0.5px solid var(--line)",
           }}
         >
@@ -101,7 +101,7 @@ export function QRScanner() {
           className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-all"
           style={{
             background: mode === "manual" ? "var(--brand)" : "var(--panel-2)",
-            color: mode === "manual" ? "#fff" : "var(--text-sub)",
+            color: mode === "manual" ? "var(--on-brand)" : "var(--text-sub)",
             border: "0.5px solid var(--line)",
           }}
         >

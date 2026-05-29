@@ -95,12 +95,12 @@ export function PartsClient({ data, formData, total, page, totalPages, initialQ,
                 key={tb.key}
                 onClick={() => handleTabChange(tb.key)}
                 className="rounded-lg px-3 py-1.5 text-xs font-medium"
-                style={{ background: tab === tb.key ? "var(--brand)" : "transparent", color: tab === tb.key ? "#fff" : "var(--text-sub)" }}
+                style={{ background: tab === tb.key ? "var(--brand)" : "transparent", color: tab === tb.key ? "var(--on-brand)" : "var(--text-sub)" }}
               >
                 {tb.label}
                 <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]" style={{
                   background: tab === tb.key ? "rgba(255,255,255,0.25)" : "var(--panel-2)",
-                  color: tab === tb.key ? "#fff" : tb.key === "low" && lowStockCount > 0 ? "var(--danger)" : "var(--text-sub)",
+                  color: tab === tb.key ? "var(--on-brand)" : tb.key === "low" && lowStockCount > 0 ? "var(--danger)" : "var(--text-sub)",
                 }}>
                   {tb.key === "low" ? lowStockCount : total}
                 </span>

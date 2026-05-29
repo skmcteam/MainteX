@@ -33,7 +33,7 @@ export default async function DashboardPage() {
           {t("dashboard.title")}
         </h1>
         <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>
-          ระบบบำรุงรักษา SKMC · อัปเดตล่าสุด: {new Date().toLocaleTimeString("th-TH")}
+          {t("dashboard.subtitle", { time: new Date().toLocaleTimeString("th-TH") })}
         </p>
       </div>
 
@@ -118,11 +118,11 @@ export default async function DashboardPage() {
               {t("dashboard.recentWOs")}
             </p>
             <Link href="/work-orders" className="text-xs" style={{ color: "var(--brand)" }}>
-              ดูทั้งหมด →
+              {t("dashboard.viewAll")}
             </Link>
           </div>
           {stats.recentWOs.length === 0 ? (
-            <EmptyState title="ไม่มีใบสั่งซ่อม" icon={ClipboardList} />
+            <EmptyState title={t("dashboard.emptyWOs")} icon={ClipboardList} />
           ) : (
             <div>
               {stats.recentWOs.map((wo) => (
@@ -166,11 +166,11 @@ export default async function DashboardPage() {
               {t("dashboard.upcomingPMs")}
             </p>
             <Link href="/pm-schedule" className="text-xs" style={{ color: "var(--brand)" }}>
-              ดูทั้งหมด →
+              {t("dashboard.viewAll")}
             </Link>
           </div>
           {stats.upcomingPMs.length === 0 ? (
-            <EmptyState title="ไม่มี PM ที่จะถึง" icon={CalendarCheck} />
+            <EmptyState title={t("dashboard.emptyPMs")} icon={CalendarCheck} />
           ) : (
             <div>
               {stats.upcomingPMs.map((pm) => (

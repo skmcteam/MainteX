@@ -83,7 +83,7 @@ export function AssetTable({ data, category, formData, total, page, totalPages, 
                 className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
                 style={{
                   background: status === t.key ? "var(--brand)" : "transparent",
-                  color: status === t.key ? "#fff" : "var(--text-sub)",
+                  color: status === t.key ? "var(--on-brand)" : "var(--text-sub)",
                 }}
               >
                 {t.label}
@@ -92,7 +92,7 @@ export function AssetTable({ data, category, formData, total, page, totalPages, 
                     className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]"
                     style={{
                       background: status === t.key ? "rgba(255,255,255,0.25)" : "var(--panel-2)",
-                      color: status === t.key ? "#fff" : "var(--text-sub)",
+                      color: status === t.key ? "var(--on-brand)" : "var(--text-sub)",
                     }}
                   >
                     {statusCounts[t.key]}

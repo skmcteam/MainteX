@@ -56,9 +56,6 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.79.0
         version: 5.100.14(react@19.2.6)
-      '@tanstack/react-query-devtools':
-        specifier: ^5.79.0
-        version: 5.100.14(@tanstack/react-query@5.100.14(react@19.2.6))(react@19.2.6)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -135,6 +132,9 @@ importers:
       '@playwright/test':
         specifier: ^1.52.0
         version: 1.60.0
+      '@tanstack/react-query-devtools':
+        specifier: ^5.100.14
+        version: 5.100.14(@tanstack/react-query@5.100.14(react@19.2.6))(react@19.2.6)
       '@types/bcryptjs':
         specifier: ^3.0.0
         version: 3.0.0

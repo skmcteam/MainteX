@@ -81,14 +81,14 @@ export function WorkOrderList({ data, formData, total, page, totalPages, pageSiz
                 className="flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
                 style={{
                   background: status === key ? "var(--brand)" : "transparent",
-                  color: status === key ? "#fff" : "var(--text-sub)",
+                  color: status === key ? "var(--on-brand)" : "var(--text-sub)",
                 }}
               >
                 {statusLabel(key)}
                 {statusCounts[key] != null && (
                   <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]" style={{
                     background: status === key ? "rgba(255,255,255,0.25)" : "var(--panel-2)",
-                    color: status === key ? "#fff" : "var(--text-sub)",
+                    color: status === key ? "var(--on-brand)" : "var(--text-sub)",
                   }}>
                     {statusCounts[key]}
                   </span>

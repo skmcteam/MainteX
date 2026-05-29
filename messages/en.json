@@ -91,7 +91,11 @@
     "topBadActors": "Top Bad Actors",
     "cmVsPm": "CM vs PM",
     "hours": "hours",
-    "days": "days"
+    "days": "days",
+    "subtitle": "MainteX — Maintenance Management · Updated: {time}",
+    "viewAll": "View all →",
+    "emptyWOs": "No work orders",
+    "emptyPMs": "No upcoming PMs"
   },
   "wo": {
     "title": "Work Orders",
@@ -135,6 +139,7 @@
     "comment": "Comment",
     "attachments": "Attachments",
     "spareParts": "Parts Used",
+    "subtitle": "Work Order Management · {count} records",
     "searchPlaceholder": "Search WO# / Title...",
     "empty": "No work orders found",
     "emptyDesc": "Try changing filters or create a new work order",

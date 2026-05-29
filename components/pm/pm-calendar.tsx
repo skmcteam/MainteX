@@ -84,7 +84,7 @@ export function PMCalendar({ data }: Props) {
                 <>
                   <div
                     className="mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium"
-                    style={isToday ? { background: "var(--brand)", color: "#fff" } : { color: "var(--text-sub)" }}
+                    style={isToday ? { background: "var(--brand)", color: "var(--on-brand)" } : { color: "var(--text-sub)" }}
                   >
                     {day}
                   </div>

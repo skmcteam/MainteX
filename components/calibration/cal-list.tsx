@@ -73,12 +73,12 @@ export function CalList({ data, labs }: Props) {
                 key={key}
                 onClick={() => setTab(key)}
                 className="flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
-                style={{ background: tab === key ? "var(--brand)" : "transparent", color: tab === key ? "#fff" : "var(--text-sub)" }}
+                style={{ background: tab === key ? "var(--brand)" : "transparent", color: tab === key ? "var(--on-brand)" : "var(--text-sub)" }}
               >
                 {statusLabel(key)}
                 <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]" style={{
                   background: tab === key ? "rgba(255,255,255,0.25)" : "var(--panel-2)",
-                  color: tab === key ? "#fff" : "var(--text-sub)",
+                  color: tab === key ? "var(--on-brand)" : "var(--text-sub)",
                 }}>
                   {counts[key] ?? 0}
                 </span>

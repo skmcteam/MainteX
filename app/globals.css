@@ -19,6 +19,7 @@
   --brand: #1B6FE8;
   --brand-soft: rgba(27, 111, 232, 0.10);
   --brand-hover: #1560CC;
+  --on-brand: #FFFFFF;
 
   --success: #0D9062;
   --success-soft: #EAF5F0;
@@ -55,6 +56,7 @@
   --brand: #4A8EF0;
   --brand-soft: rgba(74, 142, 240, 0.13);
   --brand-hover: #5A9BFF;
+  --on-brand: #FFFFFF;
 
   --success: #1DB87A;
   --success-soft: rgba(29, 184, 122, 0.12);

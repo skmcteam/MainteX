@@ -100,7 +100,7 @@ export function PMList({ data, formData }: Props) {
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all"
-                  style={{ background: viewMode === mode ? "var(--brand)" : "transparent", color: viewMode === mode ? "#fff" : "var(--text-sub)" }}
+                  style={{ background: viewMode === mode ? "var(--brand)" : "transparent", color: viewMode === mode ? "var(--on-brand)" : "var(--text-sub)" }}
                   title={t(labelKey as Parameters<typeof t>[0])}
                 >
                   {icon}
@@ -115,12 +115,12 @@ export function PMList({ data, formData }: Props) {
                   key={key}
                   onClick={() => setTab(key)}
                   className="flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
-                  style={{ background: tab === key ? "var(--brand)" : "transparent", color: tab === key ? "#fff" : "var(--text-sub)" }}
+                  style={{ background: tab === key ? "var(--brand)" : "transparent", color: tab === key ? "var(--on-brand)" : "var(--text-sub)" }}
                 >
                   {filterLabel(key)}
                   <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]" style={{
                     background: tab === key ? "rgba(255,255,255,0.25)" : "var(--panel-2)",
-                    color: tab === key ? "#fff" : "var(--text-sub)",
+                    color: tab === key ? "var(--on-brand)" : "var(--text-sub)",
                   }}>
                     {counts[key]}
                   </span>

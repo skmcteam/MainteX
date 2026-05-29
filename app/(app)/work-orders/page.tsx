@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getWorkOrders, getWOFormData } from "@/app/(app)/work-orders/actions";
 import { WorkOrderList } from "@/components/work-orders/wo-list";
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default async function WorkOrdersPage({ searchParams }: Props) {
+  const t = await getTranslations();
   const params = await searchParams;
   const q = params.q ?? "";
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
@@ -23,10 +25,10 @@ export default async function WorkOrdersPage({ searchParams }: Props) {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-[17px] font-semibold" style={{ color: "var(--text)" }}>
-          ใบสั่งซ่อม
+          {t("wo.title")}
         </h1>
         <p className="mt-0.5 text-xs" style={{ color: "var(--text-sub)" }}>
-          ระบบบริหารจัดการใบสั่งซ่อมบำรุง · {result.statusCounts.all} รายการ
+          {t("wo.subtitle", { count: result.statusCounts.all })}
         </p>
       </div>
       <WorkOrderList

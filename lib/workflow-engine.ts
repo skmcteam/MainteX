@@ -28,7 +28,7 @@ export async function initWorkflow(
   _workflowId: string,
 ): Promise<void> {
   // TODO Phase 5: create first WOApproval record, update WO status
-  throw new Error("Workflow engine not yet implemented (Phase 5)");
+  console.warn("[workflow-engine] initWorkflow called — Phase 5 not yet implemented. Skipping.");
 }
 
 /** Stub: will advance the approval state machine by one step. */
@@ -39,5 +39,6 @@ export async function advanceWorkflow(
   _comment?: string,
 ): Promise<WorkflowStepResult> {
   // TODO Phase 5: validate actor role, write transition, notify next approver
-  throw new Error("Workflow engine not yet implemented (Phase 5)");
+  console.warn("[workflow-engine] advanceWorkflow called — Phase 5 not yet implemented. Skipping.");
+  return { nextStepIndex: null, status: "PENDING" };
 }

@@ -178,7 +178,7 @@ function StepForm({
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
               style={{
                 background: actions.includes(a) ? "var(--brand)" : "var(--panel)",
-                color: actions.includes(a) ? "#fff" : "var(--text-sub)",
+                color: actions.includes(a) ? "var(--on-brand)" : "var(--text-sub)",
                 border: "0.5px solid var(--line)",
               }}
             >
