@@ -63,6 +63,8 @@
     "sortBy": "เรียงตาม",
     "ascending": "น้อยไปมาก",
     "descending": "มากไปน้อย",
+    "switchToDark": "เปิดโหมดกลางคืน",
+    "switchToLight": "เปิดโหมดกลางวัน",
     "error": {
       "title": "เกิดข้อผิดพลาด",
       "message": "ไม่สามารถโหลดข้อมูลได้",
@@ -307,6 +309,10 @@
   },
   "cal": {
     "title": "สอบเทียบ",
+    "pageTitle": "การสอบเทียบเครื่องมือวัด",
+    "subtitle": "เครื่องมือทั้งหมด {count} รายการ",
+    "overdueCount": " · เกินกำหนด {count} รายการ",
+    "dueSoonCount": " · ใกล้ครบกำหนด {count} รายการ",
     "instrument": "เครื่องมือวัด",
     "calDate": "วันที่สอบเทียบ",
     "nextCalDate": "กำหนดสอบเทียบ",
@@ -388,11 +394,43 @@
     "calibrationLabs": "ห้องปฏิบัติการ",
     "suppliers": "ผู้จำหน่าย",
     "notificationRules": "กฎการแจ้งเตือน",
+    "usersSubtitle": "จัดการบัญชีผู้ใช้ · {count} รายการ",
+    "usersDesc": "จัดการผู้ใช้และสิทธิ์",
+    "rolesDesc": "กำหนดบทบาทและสิทธิ์",
+    "workflowDesc": "ออกแบบ workflow",
+    "woTypesDesc": "CM, PM, สอบเทียบ ฯลฯ",
+    "departmentsDesc": "โครงสร้างองค์กร",
+    "assetClassesDesc": "กลุ่ม A/B/C",
+    "calibrationLabsDesc": "SP Metrology, PCaL ฯลฯ",
+    "suppliersDesc": "ซัพพลายเออร์อะไหล่",
+    "notificationRulesDesc": "event × audience × channel",
+    "checklistTemplatesDesc": "สร้าง checklist สำหรับ PM",
+    "checklistTemplate": {
+      "add": "เพิ่ม Template",
+      "addTitle": "เพิ่ม Template ใหม่",
+      "editTitle": "แก้ไข Template",
+      "manage": "จัดการรายการ",
+      "itemCount": "{count} รายการ",
+      "allClasses": "— ทั้งหมด —",
+      "fieldNameTh": "ชื่อภาษาไทย *",
+      "fieldNameEn": "ชื่อภาษาอังกฤษ *",
+      "saving": "กำลังบันทึก...",
+      "createSuccess": "สร้างสำเร็จ",
+      "updateSuccess": "แก้ไขสำเร็จ",
+      "errorCode": "กรุณาระบุรหัส",
+      "errorNameTh": "กรุณาระบุชื่อภาษาไทย",
+      "errorNameEn": "กรุณาระบุชื่อภาษาอังกฤษ",
+      "placeholderNameTh": "รายการตรวจสอบ..."
+    },
     "workflowDesigner": {
       "subtitle": "ออกแบบขั้นตอนการอนุมัติสำหรับใบสั่งซ่อม",
       "bannerTitle": "Phase 5 — Approval Engine กำลังพัฒนา",
       "bannerBody": "Designer ใช้ตั้งค่าและบันทึก Workflow ได้ตามปกติ แต่ยังไม่ผูกกับใบสั่งซ่อม (WO) จริง — ใบสั่งซ่อมที่สร้างขึ้นยังข้ามขั้นตอน Approval ไปก่อน"
     }
+  },
+  "scan": {
+    "title": "สแกน QR Code",
+    "subtitle": "สแกน QR เพื่อเปิดหน้ารายละเอียดอุปกรณ์"
   },
   "notifications": {
     "title": "การแจ้งเตือน",

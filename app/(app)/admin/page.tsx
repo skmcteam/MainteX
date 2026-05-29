@@ -3,17 +3,17 @@ import { Settings, Users, Workflow, Tag, Building2, Layers, Gauge, Truck, BellRi
 import Link from "next/link";
 
 const sections = [
-  { href: "/admin/users", icon: Users, titleTh: "ผู้ใช้งาน", descTh: "จัดการผู้ใช้และสิทธิ์" },
-  { href: "/admin/roles", icon: Settings, titleTh: "บทบาท", descTh: "กำหนดบทบาทและสิทธิ์" },
-  { href: "/admin/workflow-designer", icon: Workflow, titleTh: "ขั้นตอนอนุมัติ", descTh: "ออกแบบ workflow" },
-  { href: "/admin/wo-types", icon: Tag, titleTh: "ประเภทใบสั่งซ่อม", descTh: "CM, PM, สอบเทียบ ฯลฯ" },
-  { href: "/admin/departments", icon: Building2, titleTh: "แผนก/หน่วยงาน", descTh: "โครงสร้างองค์กร" },
-  { href: "/admin/asset-classes", icon: Layers, titleTh: "ประเภทสินทรัพย์", descTh: "กลุ่ม A/B/C" },
-  { href: "/admin/calibration-labs", icon: Gauge, titleTh: "ห้องปฏิบัติการ", descTh: "SP Metrology, PCaL ฯลฯ" },
-  { href: "/admin/suppliers", icon: Truck, titleTh: "ผู้จำหน่าย", descTh: "ซัพพลายเออร์อะไหล่" },
-  { href: "/admin/notification-rules", icon: BellRing, titleTh: "กฎการแจ้งเตือน", descTh: "event × audience × channel" },
-  { href: "/admin/checklist-templates", icon: ListChecks, titleTh: "รายการตรวจสอบ", descTh: "สร้าง checklist สำหรับ PM" },
-];
+  { href: "/admin/users",                icon: Users,       titleKey: "admin.users",             descKey: "admin.usersDesc" },
+  { href: "/admin/roles",                icon: Settings,    titleKey: "admin.roles",              descKey: "admin.rolesDesc" },
+  { href: "/admin/workflow-designer",    icon: Workflow,    titleKey: "admin.workflow",           descKey: "admin.workflowDesc" },
+  { href: "/admin/wo-types",             icon: Tag,         titleKey: "admin.woTypes",            descKey: "admin.woTypesDesc" },
+  { href: "/admin/departments",          icon: Building2,   titleKey: "admin.departments",        descKey: "admin.departmentsDesc" },
+  { href: "/admin/asset-classes",        icon: Layers,      titleKey: "admin.assetClasses",       descKey: "admin.assetClassesDesc" },
+  { href: "/admin/calibration-labs",     icon: Gauge,       titleKey: "admin.calibrationLabs",    descKey: "admin.calibrationLabsDesc" },
+  { href: "/admin/suppliers",            icon: Truck,       titleKey: "admin.suppliers",          descKey: "admin.suppliersDesc" },
+  { href: "/admin/notification-rules",   icon: BellRing,    titleKey: "admin.notificationRules",  descKey: "admin.notificationRulesDesc" },
+  { href: "/admin/checklist-templates",  icon: ListChecks,  titleKey: "admin.checklistTemplates", descKey: "admin.checklistTemplatesDesc" },
+] as const;
 
 export default async function AdminPage() {
   const t = await getTranslations();
@@ -29,8 +29,8 @@ export default async function AdminPage() {
                 <Icon size={16} style={{ color: "var(--brand)" }} />
               </div>
               <div>
-                <p className="text-sm font-medium" style={{ color: "var(--text)" }}>{s.titleTh}</p>
-                <p className="text-xs" style={{ color: "var(--text-sub)" }}>{s.descTh}</p>
+                <p className="text-sm font-medium" style={{ color: "var(--text)" }}>{t(s.titleKey)}</p>
+                <p className="text-xs" style={{ color: "var(--text-sub)" }}>{t(s.descKey)}</p>
               </div>
             </Link>
           );

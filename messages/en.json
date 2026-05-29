@@ -63,6 +63,8 @@
     "sortBy": "Sort by",
     "ascending": "Ascending",
     "descending": "Descending",
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode",
     "error": {
       "title": "Something went wrong",
       "message": "Unable to load data",
@@ -307,6 +309,10 @@
   },
   "cal": {
     "title": "Calibration",
+    "pageTitle": "Instrument Calibration",
+    "subtitle": "All instruments · {count} items",
+    "overdueCount": " · Overdue {count}",
+    "dueSoonCount": " · Due soon {count}",
     "instrument": "Instrument",
     "calDate": "Cal. Date",
     "nextCalDate": "Next Cal. Date",
@@ -388,11 +394,43 @@
     "calibrationLabs": "Cal. Laboratories",
     "suppliers": "Suppliers",
     "notificationRules": "Notification Rules",
+    "usersSubtitle": "Manage user accounts · {count} users",
+    "usersDesc": "Manage users and access",
+    "rolesDesc": "Define roles and permissions",
+    "workflowDesc": "Design approval workflow",
+    "woTypesDesc": "CM, PM, Calibration, etc.",
+    "departmentsDesc": "Organization structure",
+    "assetClassesDesc": "Group A/B/C",
+    "calibrationLabsDesc": "SP Metrology, PCaL, etc.",
+    "suppliersDesc": "Parts suppliers",
+    "notificationRulesDesc": "Event × audience × channel",
+    "checklistTemplatesDesc": "Create checklists for PM",
+    "checklistTemplate": {
+      "add": "Add Template",
+      "addTitle": "Add New Template",
+      "editTitle": "Edit Template",
+      "manage": "Manage Items",
+      "itemCount": "{count} items",
+      "allClasses": "— All —",
+      "fieldNameTh": "Thai Name *",
+      "fieldNameEn": "English Name *",
+      "saving": "Saving...",
+      "createSuccess": "Created successfully",
+      "updateSuccess": "Updated successfully",
+      "errorCode": "Code is required",
+      "errorNameTh": "Thai name is required",
+      "errorNameEn": "English name is required",
+      "placeholderNameTh": "Inspection checklist..."
+    },
     "workflowDesigner": {
       "subtitle": "Design approval steps for work orders",
       "bannerTitle": "Phase 5 — Approval Engine in Development",
       "bannerBody": "The Designer can configure and save Workflows, but they are not yet connected to Work Orders — WOs created now skip the Approval step."
     }
+  },
+  "scan": {
+    "title": "Scan QR Code",
+    "subtitle": "Scan QR to view asset details"
   },
   "notifications": {
     "title": "Notifications",
