@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "WOStatus" ADD VALUE 'PENDING_APPROVAL';
